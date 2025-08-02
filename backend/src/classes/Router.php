@@ -227,30 +227,28 @@ class Router {
         $this->notFound();
     }
 
-    /**
-     * Convert a route pattern to a regular expression
-     * 
-     * Transforms route patterns with placeholder syntax into regex patterns
-     * for matching against request paths.
-     * 
-     * @param string $pattern The route pattern (e.g., "/api/users/{id}")
-     * 
-     * @return string The converted regex pattern
-     * 
-     * @example
-     * - "/api/users/{id}" becomes "/^\/api\/users\/([^\/]+)$/"
-     * - "/api/posts/{postId}/comments/{commentId}" becomes "/^\/api\/posts\/([^\/]+)\/comments\/([^\/]+)$/"
-     */
-    private function convertPatternToRegex(string $pattern): string {
-        // Escape special regex characters except for our placeholders
-        $pattern = preg_quote($pattern, '/');
-        
-        // Convert {param} placeholders to capturing groups
-        // This matches any characters except forward slashes
-        $pattern = preg_replace('/\\\\{([^}]+)\\\\}/', '([^/]+)', $pattern);
-        
-        // Ensure exact match from start to end
-        return '/^' . $pattern . '$/';
+    
+/**
+ * Convert a route pattern to a regular expression
+ * 
+ * Transforms route patterns with placeholder syntax into regex patterns
+ * for matching against request paths.
+ * 
+ * @param string $pattern The route pattern (e.g., "/api/users/{id}")
+ * 
+ * @return string The converted regex pattern
+ */
+private function convertPatternToRegex(string $pattern): string {
+    // First, escape special regex characters except for our placeholders
+    $pattern = preg_quote($pattern, '/');
+    
+    // Convert {param} placeholders to capturing groups
+    // This matches any characters except forward slashes
+    // We need to use preg_quote to properly escape the braces, then replace them
+    $pattern = preg_replace('/\\\{[^}]+\\\}/', '([^\/]+)', $pattern);
+    
+    // Ensure exact match from start to end
+    return '/^' . $pattern . '$/';
     }
 
     /**

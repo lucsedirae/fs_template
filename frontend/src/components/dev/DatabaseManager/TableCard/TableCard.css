@@ -1,0 +1,37 @@
+/* TableCard Component - Minimal Bootstrap 5 enhancements */
+
+/* Smooth transitions for card interactions */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Smooth button transitions */
+.btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Ensure consistent spinner sizing */
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Responsive improvements for mobile */
+@media (max-width: 576px) {
+  .card-body .d-flex.gap-2 {
+    flex-direction: column;
+  }
+  
+  .card-body .d-flex.gap-2 .btn {
+    flex: none !important;
+  }
+}
