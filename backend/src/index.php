@@ -20,20 +20,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+// Remove trailing slash if present
+$path = rtrim($path, '/');
+
 // Simple routing
-switch ($path) {
-    case '/':
-    case '/api':
+switch (true) {
+    case $path === '' || $path === '/api':
         handleRoot($method);
         break;
-    case '/api/hello':
+    case $path === '/api/hello':
         handleHello($method);
         break;
-    case '/api/status':
+    case $path === '/api/status':
         handleStatus($method);
         break;
-    case '/api/db-test':
+    case $path === '/api/db-test':
         handleDatabaseTest($method);
+        break;
+    case $path === '/api/tables':
+        handleTables($method);
+        break;
+    case preg_match('/^\/api\/tables\/(.+)$/', $path, $matches):
+        handleSpecificTable($method, $matches[1]);
         break;
     default:
         http_response_code(404);
@@ -49,7 +57,10 @@ function handleRoot($method) {
             'available_endpoints' => [
                 'GET /api/hello - Hello world endpoint',
                 'GET /api/status - Service status',
-                'GET /api/db-test - Database connection test'
+                'GET /api/db-test - Database connection test',
+                'GET /api/tables - List all tables',
+                'POST /api/tables - Create a new table',
+                'DELETE /api/tables/{name} - Delete a table'
             ]
         ];
         echo json_encode($response, JSON_PRETTY_PRINT);
@@ -106,5 +117,77 @@ function handleDatabaseTest($method) {
     } else {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
+    }
+}
+
+function handleTables($method) {
+    $database = new Database();
+    
+    switch ($method) {
+        case 'GET':
+            // List all tables
+            $result = $database->getTables();
+            
+            if ($result['status'] === 'success') {
+                http_response_code(200);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            } else {
+                http_response_code(500);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            }
+            break;
+            
+        case 'POST':
+            // Create a new table
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!$input || !isset($input['tableName']) || !isset($input['columns'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Missing required fields: tableName and columns'
+                ]);
+                return;
+            }
+            
+            $result = $database->createTable($input['tableName'], $input['columns']);
+            
+            if ($result['status'] === 'success') {
+                http_response_code(201);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            } else {
+                http_response_code(400);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            }
+            break;
+            
+        default:
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            break;
+    }
+}
+
+function handleSpecificTable($method, $tableName) {
+    $database = new Database();
+    
+    switch ($method) {
+        case 'DELETE':
+            // Delete a table
+            $result = $database->dropTable($tableName);
+            
+            if ($result['status'] === 'success') {
+                http_response_code(200);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            } else {
+                http_response_code(400);
+                echo json_encode($result, JSON_PRETTY_PRINT);
+            }
+            break;
+            
+        default:
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            break;
     }
 }
