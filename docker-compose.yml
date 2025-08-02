@@ -1,17 +1,27 @@
-version: '3.8'
-
 services:
-  react-app:
+  frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
-    container_name: my-react-app
+    container_name: react-frontend
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     stdin_open: true
     tty: true
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: php-backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend/src:/var/www/html
+    depends_on:
+      - frontend
