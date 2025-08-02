@@ -1,6 +1,9 @@
 <?php
 // backend/src/index.php
 
+// Include the Database class
+require_once 'Database.php';
+
 // Set CORS headers to allow requests from React app
 header('Access-Control-Allow-Origin: http://localhost:3000');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -29,6 +32,9 @@ switch ($path) {
     case '/api/status':
         handleStatus($method);
         break;
+    case '/api/db-test':
+        handleDatabaseTest($method);
+        break;
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Endpoint not found', 'path' => $path]);
@@ -42,7 +48,8 @@ function handleRoot($method) {
             'version' => '1.0.0',
             'available_endpoints' => [
                 'GET /api/hello - Hello world endpoint',
-                'GET /api/status - Service status'
+                'GET /api/status - Service status',
+                'GET /api/db-test - Database connection test'
             ]
         ];
         echo json_encode($response, JSON_PRETTY_PRINT);
@@ -78,6 +85,24 @@ function handleStatus($method) {
             'uptime' => round(microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'], 3) . 's'
         ];
         echo json_encode($response, JSON_PRETTY_PRINT);
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+}
+
+function handleDatabaseTest($method) {
+    if ($method === 'GET') {
+        $database = new Database();
+        $result = $database->testConnection();
+        
+        if ($result['status'] === 'success') {
+            http_response_code(200);
+        } else {
+            http_response_code(500);
+        }
+        
+        echo json_encode($result, JSON_PRETTY_PRINT);
     } else {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
