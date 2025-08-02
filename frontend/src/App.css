@@ -6,7 +6,7 @@
   background-color: #282c34;
   padding: 20px;
   color: white;
-  min-height: 60vh; /* Reduced from 100vh to make room for API test */
+  min-height: 40vh; /* Reduced to make room for more content */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,9 +30,40 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Add styling for the main content area */
+/* Main content area styling */
 main {
   background-color: #f5f5f5;
-  min-height: 40vh;
+  min-height: 60vh;
+  padding: 0;
+}
+
+/* Section styling for organized layout */
+.app-section {
+  background-color: white;
+  margin: 20px 0;
   padding: 20px 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+.app-section:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+.app-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .App-header {
+    padding: 15px;
+    min-height: 30vh;
+    font-size: calc(8px + 2vmin);
+  }
+  
+  .app-section {
+    margin: 10px 0;
+    padding: 15px 0;
+  }
 }

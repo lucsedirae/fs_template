@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
-import ApiTest from './components/ApiTest';
+import ApiTest from './components/dev/ApiTest/ApiTest';
+import DatabaseManager from './components/dev/DatabaseManager/DatabaseManager';
 
 function App() {
   return (
@@ -12,9 +13,16 @@ function App() {
         </p>
       </header>
       
-      {/* Add the API Test component */}
       <main>
-        <ApiTest />
+        {/* Database Management Section */}
+        <section className="app-section">
+          <DatabaseManager />
+        </section>
+        
+        {/* API Test Section */}
+        <section className="app-section">
+          <ApiTest />
+        </section>
       </main>
     </div>
   );
