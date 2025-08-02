@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
-import ApiTest from './components/ApiTest';
-import DatabaseManager from './components/DatabaseManager';
+import ApiTest from './components/dev/ApiTest/ApiTest';
+import DatabaseManager from './components/dev/DatabaseManager/DatabaseManager';
 
 function App() {
   return (
