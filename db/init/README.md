@@ -1,0 +1,1 @@
+This directory is for scripts that are run when the db is created
