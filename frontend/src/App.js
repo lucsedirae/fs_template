@@ -1,7 +1,6 @@
 import React from 'react';
 import './App.css';
-import ApiTest from './components/dev/ApiTest/ApiTest';
-import DatabaseManager from './components/dev/DatabaseManager/DatabaseManager';
+import Dashboard from './components/Dashboard/Dashboard';
 
 function App() {
   return (
@@ -14,15 +13,7 @@ function App() {
       </header>
       
       <main>
-        {/* Database Management Section */}
-        <section className="app-section">
-          <DatabaseManager />
-        </section>
-        
-        {/* API Test Section */}
-        <section className="app-section">
-          <ApiTest />
-        </section>
+        <Dashboard />
       </main>
     </div>
   );
