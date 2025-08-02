@@ -9,11 +9,6 @@
   transform: translateY(-1px);
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
 /* Ensure form elements have consistent spacing */
 .form-check-label.small {
   font-size: 0.875rem;
@@ -23,10 +18,6 @@
 /* Custom card styling for table items */
 .card.h-100 {
   transition: all 0.3s ease;
-}
-
-.card.border-primary.border-opacity-25 {
-  border-color: rgba(13, 110, 253, 0.25) !important;
 }
 
 /* Spinner consistency */

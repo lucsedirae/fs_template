@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import './DatabaseManager.css';
+import TableCard from './TableCard/TableCard';
+
 const DatabaseManager = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -156,6 +157,13 @@ const DatabaseManager = () => {
     }
   };
 
+  // Handle viewing table details (placeholder for future functionality)
+  const viewTable = (tableName) => {
+    console.log(`Viewing table: ${tableName}`);
+    // TODO: Implement table viewing functionality
+    alert(`View functionality for "${tableName}" coming soon!`);
+  };
+
   const columnTypes = [
     'SERIAL',
     'INTEGER',
@@ -238,7 +246,11 @@ const DatabaseManager = () => {
             >
               {loading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <span 
+                    className="spinner-border spinner-border-sm me-2" 
+                    role="status" 
+                    aria-hidden="true"
+                  ></span>
                   Loading...
                 </>
               ) : (
@@ -417,47 +429,36 @@ const DatabaseManager = () => {
       <div className="row">
         <div className="col">
           <div className="card shadow">
-            <div className="card-header bg-light">
+            <div className="card-header bg-light d-flex justify-content-between align-items-center">
               <h5 className="card-title mb-0">
                 <span className="me-2">📋</span>
                 Existing Tables
               </h5>
+              {tables.length > 0 && (
+                <span className="badge bg-primary">
+                  {tables.length} table{tables.length !== 1 ? 's' : ''}
+                </span>
+              )}
             </div>
             <div className="card-body">
               {tables.length === 0 ? (
                 <div className="text-center py-5">
                   <div className="text-muted">
                     <span className="fs-1 d-block mb-3">📂</span>
-                    <p className="lead">No tables found</p>
+                    <h4 className="mb-3">No tables found</h4>
                     <p className="mb-0">Create your first table to get started!</p>
                   </div>
                 </div>
               ) : (
                 <div className="row g-4">
                   {tables.map((table) => (
-                    <div key={table.table_name} className="col-md-6 col-lg-4">
-                      <div className="card h-100 border-primary border-opacity-25">
-                        <div className="card-body d-flex flex-column">
-                          <h6 className="card-title text-primary">
-                            <span className="me-2">🗃️</span>
-                            {table.table_name}
-                          </h6>
-                          <p className="card-text text-muted small mb-3">
-                            Type: {table.table_type}
-                          </p>
-                          <div className="mt-auto">
-                            <button
-                              onClick={() => deleteTable(table.table_name)}
-                              className="btn btn-outline-danger btn-sm"
-                              disabled={loading}
-                            >
-                              <span className="me-2">🗑️</span>
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <TableCard
+                      key={table.table_name}
+                      table={table}
+                      onDelete={deleteTable}
+                      onView={viewTable}
+                      loading={loading}
+                    />
                   ))}
                 </div>
               )}
