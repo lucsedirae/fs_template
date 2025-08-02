@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './DatabaseManager.css';
-
 const DatabaseManager = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -173,155 +172,298 @@ const DatabaseManager = () => {
   ];
 
   return (
-    <div className="database-manager">
-      <div className="database-manager-header">
-        <h2>🗄️ Database Table Manager</h2>
-        <p>Create and manage your database tables</p>
+    <div className="container-fluid">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col">
+          <div className="text-center py-4 border-bottom">
+            <h2 className="mb-3">
+              <span className="me-2">🗄️</span>
+              Database Table Manager
+            </h2>
+            <p className="text-muted mb-0">Create and manage your database tables</p>
+          </div>
+        </div>
       </div>
 
+      {/* Alert Messages */}
       {error && (
-        <div className="message error-message">
-          <strong>Error:</strong> {error}
+        <div className="row mb-4">
+          <div className="col">
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>Error:</strong> {error}
+              <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+            </div>
+          </div>
         </div>
       )}
 
       {success && (
-        <div className="message success-message">
-          <strong>Success:</strong> {success}
+        <div className="row mb-4">
+          <div className="col">
+            <div className="alert alert-success alert-dismissible fade show" role="alert">
+              <strong>Success:</strong> {success}
+              <button type="button" className="btn-close" onClick={() => setSuccess(null)}></button>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="controls">
-        <button 
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="create-table-button"
-          disabled={loading}
-        >
-          {showCreateForm ? 'Cancel' : 'Create New Table'}
-        </button>
-        
-        <button 
-          onClick={fetchTables}
-          className="refresh-button"
-          disabled={loading}
-        >
-          {loading ? 'Loading...' : 'Refresh Tables'}
-        </button>
+      {/* Control Buttons */}
+      <div className="row mb-4">
+        <div className="col">
+          <div className="d-flex flex-wrap justify-content-center gap-3">
+            <button 
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {showCreateForm ? (
+                <>
+                  <span className="me-2">❌</span>
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <span className="me-2">➕</span>
+                  Create New Table
+                </>
+              )}
+            </button>
+            
+            <button 
+              onClick={fetchTables}
+              className="btn btn-outline-primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <span className="me-2">🔄</span>
+                  Refresh Tables
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* Create Table Form */}
       {showCreateForm && (
-        <div className="create-table-form">
-          <h3>Create New Table</h3>
-          <form onSubmit={createTable}>
-            <div className="form-group">
-              <label htmlFor="tableName">Table Name:</label>
-              <input
-                type="text"
-                id="tableName"
-                value={newTableName}
-                onChange={(e) => setNewTableName(e.target.value)}
-                placeholder="Enter table name"
-                disabled={loading}
-              />
-            </div>
+        <div className="row mb-5">
+          <div className="col">
+            <div className="card shadow">
+              <div className="card-header bg-primary text-white">
+                <h5 className="card-title mb-0">
+                  <span className="me-2">🆕</span>
+                  Create New Table
+                </h5>
+              </div>
+              <div className="card-body">
+                <form onSubmit={createTable}>
+                  {/* Table Name Input */}
+                  <div className="mb-4">
+                    <label htmlFor="tableName" className="form-label fw-bold">
+                      Table Name
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="tableName"
+                      value={newTableName}
+                      onChange={(e) => setNewTableName(e.target.value)}
+                      placeholder="Enter table name"
+                      disabled={loading}
+                    />
+                  </div>
 
-            <div className="columns-section">
-              <h4>Columns:</h4>
-              {columns.map((column, index) => (
-                <div key={index} className="column-row">
-                  <input
-                    type="text"
-                    placeholder="Column name"
-                    value={column.name}
-                    onChange={(e) => updateColumn(index, 'name', e.target.value)}
-                    disabled={loading}
-                  />
-                  
-                  <select
-                    value={column.type}
-                    onChange={(e) => updateColumn(index, 'type', e.target.value)}
-                    disabled={loading}
-                  >
-                    {columnTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                  {/* Columns Section */}
+                  <div className="mb-4">
+                    <h6 className="fw-bold mb-3">Columns</h6>
+                    
+                    {columns.map((column, index) => (
+                      <div key={index} className="card mb-3 border-light">
+                        <div className="card-body">
+                          <div className="row g-3 align-items-center">
+                            {/* Column Name */}
+                            <div className="col-md-3">
+                              <label className="form-label small">Column Name</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Column name"
+                                value={column.name}
+                                onChange={(e) => updateColumn(index, 'name', e.target.value)}
+                                disabled={loading}
+                              />
+                            </div>
+                            
+                            {/* Column Type */}
+                            <div className="col-md-3">
+                              <label className="form-label small">Data Type</label>
+                              <select
+                                className="form-select"
+                                value={column.type}
+                                onChange={(e) => updateColumn(index, 'type', e.target.value)}
+                                disabled={loading}
+                              >
+                                {columnTypes.map(type => (
+                                  <option key={type} value={type}>{type}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Checkboxes */}
+                            <div className="col-md-4">
+                              <label className="form-label small">Options</label>
+                              <div className="d-flex gap-3">
+                                <div className="form-check">
+                                  <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    id={`primary-${index}`}
+                                    checked={column.isPrimary}
+                                    onChange={(e) => updateColumn(index, 'isPrimary', e.target.checked)}
+                                    disabled={loading}
+                                  />
+                                  <label className="form-check-label small" htmlFor={`primary-${index}`}>
+                                    Primary Key
+                                  </label>
+                                </div>
+
+                                <div className="form-check">
+                                  <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    id={`notnull-${index}`}
+                                    checked={!column.nullable}
+                                    onChange={(e) => updateColumn(index, 'nullable', !e.target.checked)}
+                                    disabled={loading}
+                                  />
+                                  <label className="form-check-label small" htmlFor={`notnull-${index}`}>
+                                    Not Null
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Remove Button */}
+                            <div className="col-md-2">
+                              {columns.length > 1 && (
+                                <>
+                                  <label className="form-label small">&nbsp;</label>
+                                  <div>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeColumn(index)}
+                                      className="btn btn-outline-danger btn-sm"
+                                      disabled={loading}
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </select>
-
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={column.isPrimary}
-                      onChange={(e) => updateColumn(index, 'isPrimary', e.target.checked)}
-                      disabled={loading}
-                    />
-                    Primary Key
-                  </label>
-
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={!column.nullable}
-                      onChange={(e) => updateColumn(index, 'nullable', !e.target.checked)}
-                      disabled={loading}
-                    />
-                    Not Null
-                  </label>
-
-                  {columns.length > 1 && (
+                    
+                    {/* Add Column Button */}
                     <button
                       type="button"
-                      onClick={() => removeColumn(index)}
-                      className="remove-column-button"
+                      onClick={addColumn}
+                      className="btn btn-outline-success"
                       disabled={loading}
                     >
-                      Remove
+                      <span className="me-2">➕</span>
+                      Add Column
                     </button>
-                  )}
-                </div>
-              ))}
-              
-              <button
-                type="button"
-                onClick={addColumn}
-                className="add-column-button"
-                disabled={loading}
-              >
-                Add Column
-              </button>
-            </div>
+                  </div>
 
-            <div className="form-actions">
-              <button type="submit" disabled={loading} className="submit-button">
-                {loading ? 'Creating...' : 'Create Table'}
-              </button>
+                  {/* Form Actions */}
+                  <div className="text-center">
+                    <button 
+                      type="submit" 
+                      disabled={loading} 
+                      className="btn btn-success btn-lg"
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <span className="me-2">✅</span>
+                          Create Table
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
-      <div className="tables-list">
-        <h3>Existing Tables</h3>
-        {tables.length === 0 ? (
-          <p className="no-tables">No tables found. Create your first table!</p>
-        ) : (
-          <div className="tables-grid">
-            {tables.map((table) => (
-              <div key={table.table_name} className="table-card">
-                <h4>{table.table_name}</h4>
-                <p>Type: {table.table_type}</p>
-                <div className="table-actions">
-                  <button
-                    onClick={() => deleteTable(table.table_name)}
-                    className="delete-button"
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
+      {/* Tables List */}
+      <div className="row">
+        <div className="col">
+          <div className="card shadow">
+            <div className="card-header bg-light">
+              <h5 className="card-title mb-0">
+                <span className="me-2">📋</span>
+                Existing Tables
+              </h5>
+            </div>
+            <div className="card-body">
+              {tables.length === 0 ? (
+                <div className="text-center py-5">
+                  <div className="text-muted">
+                    <span className="fs-1 d-block mb-3">📂</span>
+                    <p className="lead">No tables found</p>
+                    <p className="mb-0">Create your first table to get started!</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div className="row g-4">
+                  {tables.map((table) => (
+                    <div key={table.table_name} className="col-md-6 col-lg-4">
+                      <div className="card h-100 border-primary border-opacity-25">
+                        <div className="card-body d-flex flex-column">
+                          <h6 className="card-title text-primary">
+                            <span className="me-2">🗃️</span>
+                            {table.table_name}
+                          </h6>
+                          <p className="card-text text-muted small mb-3">
+                            Type: {table.table_type}
+                          </p>
+                          <div className="mt-auto">
+                            <button
+                              onClick={() => deleteTable(table.table_name)}
+                              className="btn btn-outline-danger btn-sm"
+                              disabled={loading}
+                            >
+                              <span className="me-2">🗑️</span>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

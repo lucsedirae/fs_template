@@ -34,64 +34,101 @@ const Dashboard = () => {
     }
   };
 
-  // Group menu items by category for future organization
+  // Group menu items by category
   const devItems = menuItems.filter(item => item.category === 'dev');
   const appItems = menuItems.filter(item => item.category === 'app');
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-sidebar">
-        <div className="dashboard-header">
-          <h2>🛠️ Dashboard</h2>
-          <p>Development & App Tools</p>
+    <div className="container-fluid p-0">
+      <div className="row g-0">
+        {/* Sidebar */}
+        <div className="col-md-3 col-lg-2">
+          <div className="bg-primary text-white p-0 min-vh-100 shadow-sm">
+            {/* Dashboard Header */}
+            <div className="p-4 border-bottom border-white border-opacity-25">
+              <h4 className="mb-2 fw-bold">
+                <span className="me-2">🛠️</span>
+                Dashboard
+              </h4>
+              <small className="text-white-50">Development & App Tools</small>
+            </div>
+            
+            {/* Navigation Menu */}
+            <nav className="p-3">
+              {/* Development Tools Section */}
+              {devItems.length > 0 && (
+                <div className="mb-4">
+                  <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{fontSize: '0.75rem', letterSpacing: '1px'}}>
+                    Development Tools
+                  </h6>
+                  <div className="d-grid gap-2">
+                    {devItems.map((item) => (
+                      <button
+                        key={item.id}
+                        className={`btn text-start p-3 border-0 rounded-3 ${
+                          activeComponent === item.id 
+                            ? 'btn-light text-primary shadow-sm' 
+                            : 'btn-outline-light text-white'
+                        }`}
+                        onClick={() => setActiveComponent(item.id)}
+                      >
+                        <div className="d-flex align-items-center">
+                          <span className="fs-5 me-3">{item.icon}</span>
+                          <div>
+                            <div className="fw-semibold">{item.name}</div>
+                            <small className={activeComponent === item.id ? 'text-muted' : 'text-white-75'}>
+                              {item.description}
+                            </small>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* App Components Section - for future use */}
+              {appItems.length > 0 && (
+                <div className="mb-4">
+                  <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{fontSize: '0.75rem', letterSpacing: '1px'}}>
+                    Application
+                  </h6>
+                  <div className="d-grid gap-2">
+                    {appItems.map((item) => (
+                      <button
+                        key={item.id}
+                        className={`btn text-start p-3 border-0 rounded-3 ${
+                          activeComponent === item.id 
+                            ? 'btn-light text-primary shadow-sm' 
+                            : 'btn-outline-light text-white'
+                        }`}
+                        onClick={() => setActiveComponent(item.id)}
+                      >
+                        <div className="d-flex align-items-center">
+                          <span className="fs-5 me-3">{item.icon}</span>
+                          <div>
+                            <div className="fw-semibold">{item.name}</div>
+                            <small className={activeComponent === item.id ? 'text-muted' : 'text-white-75'}>
+                              {item.description}
+                            </small>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </nav>
+          </div>
         </div>
-        
-        <nav className="dashboard-menu">
-          {/* Development Tools Section */}
-          {devItems.length > 0 && (
-            <div className="menu-section">
-              <div className="menu-section-title">Development Tools</div>
-              {devItems.map((item) => (
-                <button
-                  key={item.id}
-                  className={`menu-item ${activeComponent === item.id ? 'active' : ''}`}
-                  onClick={() => setActiveComponent(item.id)}
-                >
-                  <span className="menu-icon">{item.icon}</span>
-                  <div className="menu-content">
-                    <span className="menu-name">{item.name}</span>
-                    <span className="menu-description">{item.description}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
 
-          {/* App Components Section - for future use */}
-          {appItems.length > 0 && (
-            <div className="menu-section">
-              <div className="menu-section-title">Application</div>
-              {appItems.map((item) => (
-                <button
-                  key={item.id}
-                  className={`menu-item ${activeComponent === item.id ? 'active' : ''}`}
-                  onClick={() => setActiveComponent(item.id)}
-                >
-                  <span className="menu-icon">{item.icon}</span>
-                  <div className="menu-content">
-                    <span className="menu-name">{item.name}</span>
-                    <span className="menu-description">{item.description}</span>
-                  </div>
-                </button>
-              ))}
+        {/* Main Content Area */}
+        <div className="col-md-9 col-lg-10">
+          <div className="bg-white min-vh-100">
+            <div className="p-4">
+              {renderActiveComponent()}
             </div>
-          )}
-        </nav>
-      </div>
-
-      <div className="dashboard-main">
-        <div className="dashboard-content">
-          {renderActiveComponent()}
+          </div>
         </div>
       </div>
     </div>
