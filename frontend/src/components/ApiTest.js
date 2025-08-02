@@ -4,6 +4,7 @@ import './ApiTest.css';
 const ApiTest = () => {
   const [helloResponse, setHelloResponse] = useState(null);
   const [statusResponse, setStatusResponse] = useState(null);
+  const [dbTestResponse, setDbTestResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -39,6 +40,7 @@ const ApiTest = () => {
   // Individual endpoint functions
   const testHelloEndpoint = useCallback(() => callApi('/api/hello', setHelloResponse), [callApi]);
   const testStatusEndpoint = useCallback(() => callApi('/api/status', setStatusResponse), [callApi]);
+  const testDbEndpoint = useCallback(() => callApi('/api/db-test', setDbTestResponse), [callApi]);
 
   // Test status endpoint on component mount
   useEffect(() => {
@@ -48,6 +50,7 @@ const ApiTest = () => {
   const clearResponses = () => {
     setHelloResponse(null);
     setStatusResponse(null);
+    setDbTestResponse(null);
     setError(null);
   };
 
@@ -97,6 +100,14 @@ const ApiTest = () => {
         >
           {loading ? 'Testing...' : 'Test /api/status'}
         </button>
+
+        <button 
+          onClick={testDbEndpoint} 
+          disabled={loading}
+          className="test-button db-test-button"
+        >
+          {loading ? 'Testing...' : 'Test /api/db-test'}
+        </button>
         
         <button 
           onClick={clearResponses} 
@@ -109,6 +120,7 @@ const ApiTest = () => {
       <div className="responses">
         {renderResponse(helloResponse, "Hello Endpoint Response")}
         {renderResponse(statusResponse, "Status Endpoint Response")}
+        {renderResponse(dbTestResponse, "Database Test Response")}
       </div>
 
       <div className="api-info">
@@ -116,6 +128,7 @@ const ApiTest = () => {
         <ul>
           <li><code>GET {API_BASE_URL}/api/hello</code> - Returns a hello message</li>
           <li><code>GET {API_BASE_URL}/api/status</code> - Returns backend status info</li>
+          <li><code>GET {API_BASE_URL}/api/db-test</code> - Tests database connection</li>
         </ul>
       </div>
     </div>

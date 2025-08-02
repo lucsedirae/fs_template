@@ -55,6 +55,15 @@
   transform: none;
 }
 
+.db-test-button {
+  background: #4CAF50;
+  color: white;
+}
+
+.db-test-button:hover:not(:disabled) {
+  background: #45a049;
+}
+
 .clear-button {
   background: #ff6b6b;
   color: white;
