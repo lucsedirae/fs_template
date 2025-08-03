@@ -2,6 +2,7 @@ import React from 'react';
 import './MainContent.css';
 import ApiTest from '../../dev/ApiTest/ApiTest';
 import DatabaseManager from '../../dev/DatabaseManager/DatabaseManager';
+import SettingsForm from '../../app/SettingsForm/SettingsForm';
 
 /**
  * MainContent Component
@@ -36,12 +37,17 @@ const MainContent = ({
             component: ApiTest,
             title: 'API Tester',
             description: 'Test backend API endpoints'
+        },
+        'settings': {
+            component: SettingsForm,
+            title: 'Settings',
+            description: 'Application settings and configuration'
         }
         // Add new components here as they're created:
-        // 'settings': {
-        //   component: SettingsManager,
-        //   title: 'Settings',
-        //   description: 'Application settings and configuration'
+        // 'users': {
+        //   component: UserManager,
+        //   title: 'User Management',
+        //   description: 'Manage user accounts and permissions'
         // }
     };
 
