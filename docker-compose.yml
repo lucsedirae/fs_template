@@ -26,6 +26,13 @@ services:
       - "8080:80"
     volumes:
       - ./backend/src:/var/www/html
+    environment:
+      # Database connection environment variables
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=appdb
+      - DB_USERNAME=appuser
+      - DB_PASSWORD=apppassword
     depends_on:
       - database
 
