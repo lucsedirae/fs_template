@@ -60,10 +60,8 @@ class DatabaseValidator
             $errors[] = 'Table name must start with a letter or underscore and contain only letters, numbers, and underscores';
         }
 
-        // Check for PostgreSQL reserved words
-        if (self::isReservedWord($trimmedName)) {
-            $errors[] = sprintf('"%s" is a reserved PostgreSQL keyword', $trimmedName);
-        }
+        // Note: We removed the reserved word check here because PostgreSQL allows 
+        // reserved words as identifiers when properly quoted, which our sanitizeIdentifier() method does
 
         return [
             'valid' => empty($errors),
@@ -102,10 +100,7 @@ class DatabaseValidator
             $errors[] = 'Column name must start with a letter or underscore and contain only letters, numbers, and underscores';
         }
 
-        // Check for PostgreSQL reserved words
-        if (self::isReservedWord($trimmedName)) {
-            $errors[] = sprintf('"%s" is a reserved PostgreSQL keyword', $trimmedName);
-        }
+        // Note: We removed the reserved word check here too for the same reason
 
         return [
             'valid' => empty($errors),
@@ -248,17 +243,20 @@ class DatabaseValidator
      */
     public static function sanitizeIdentifier(string $identifier): string
     {
-        // PostgreSQL identifier quoting
+        // PostgreSQL identifier quoting - this allows reserved words to be used safely
         return '"' . str_replace('"', '""', $identifier) . '"';
     }
 
     /**
      * Check if a word is a PostgreSQL reserved keyword
      * 
+     * This method is kept for reference but is no longer used in validation
+     * since we properly quote all identifiers.
+     * 
      * @param string $word Word to check
      * @return bool True if reserved word
      */
-    private static function isReservedWord(string $word): bool
+    public static function isReservedWord(string $word): bool
     {
         $reservedWords = [
             'ALL', 'AND', 'ANY', 'AS', 'ASC', 'BETWEEN', 'BY', 'CASE', 'CAST',
