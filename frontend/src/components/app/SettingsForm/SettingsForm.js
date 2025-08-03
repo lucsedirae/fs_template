@@ -257,9 +257,7 @@ const SettingsForm = ({ className = "" }) => {
                     onChange={(e) => updateSetting('theme', e.target.value)}
                     disabled={loading}
                   >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto</option>
+                    <option value="light">Coming Soon</option>
                   </select>
                 </div>
 
@@ -273,10 +271,7 @@ const SettingsForm = ({ className = "" }) => {
                     onChange={(e) => updateSetting('language', e.target.value)}
                     disabled={loading}
                   >
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
+                    <option value="en">Coming Soon</option>
                   </select>
                 </div>
 
