@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './TableViewModal.css';
 
 /**
@@ -19,20 +19,8 @@ const TableViewModal = ({ show, onHide, tableName, apiBaseUrl }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage] = useState(50); // Fixed for now, could be made configurable
 
-  // Reset state when modal opens/closes or table changes
-  useEffect(() => {
-    if (show && tableName) {
-      setCurrentPage(1);
-      setError(null);
-      fetchTableData(1);
-    } else {
-      setTableData(null);
-      setError(null);
-    }
-  }, [show, tableName]);
-
-  // Fetch table data
-  const fetchTableData = async (page = 1) => {
+  // Fetch table data - wrapped in useCallback to prevent infinite re-renders
+  const fetchTableData = useCallback(async (page = 1) => {
     setLoading(true);
     setError(null);
 
@@ -60,7 +48,19 @@ const TableViewModal = ({ show, onHide, tableName, apiBaseUrl }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiBaseUrl, tableName, perPage]);
+
+  // Reset state when modal opens/closes or table changes
+  useEffect(() => {
+    if (show && tableName) {
+      setCurrentPage(1);
+      setError(null);
+      fetchTableData(1);
+    } else {
+      setTableData(null);
+      setError(null);
+    }
+  }, [show, tableName, fetchTableData]);
 
   // Handle pagination
   const handlePageChange = (page) => {

@@ -423,4 +423,151 @@ class ApiController
 
         echo json_encode($result, JSON_PRETTY_PRINT);
     }
+
+    /**
+     * Handle the get table schema endpoint
+     * 
+     * Retrieves detailed schema information for a specific table.
+     * 
+     * @param string $tableName The name of the table to get schema for
+     * 
+     * @return void Outputs JSON response with table schema
+     * 
+     * @api GET /api/tables/{tableName}/schema
+     * 
+     * @response 200 {
+     *   "status": "success",
+     *   "table_name": "users",
+     *   "columns": [
+     *     {
+     *       "column_name": "id",
+     *       "data_type": "integer",
+     *       "is_nullable": "NO",
+     *       "column_default": "nextval('users_id_seq'::regclass)",
+     *       "is_primary_key": true,
+     *       "ordinal_position": 1
+     *     }
+     *   ],
+     *   "row_count": 10
+     * }
+     * 
+     * @response 400 {
+     *   "status": "error",
+     *   "message": "Table 'users' does not exist"
+     * }
+     */
+    public function handleGetTableSchema(string $tableName): void
+    {
+        $result = $this->database->getTableSchema($tableName);
+
+        if ($result['status'] === 'success') {
+            http_response_code(200);
+        } else {
+            http_response_code(400);
+        }
+
+        echo json_encode($result, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Handle the add column endpoint
+     * 
+     * Adds a new column to an existing table.
+     * 
+     * @param string $tableName The name of the table to modify
+     * 
+     * @return void Outputs JSON response with operation result
+     * 
+     * @api POST /api/tables/{tableName}/columns
+     * 
+     * @bodyParam string columnName required The name of the new column
+     * @bodyParam string columnType required The data type of the new column
+     * @bodyParam boolean isNullable optional Whether the column allows NULL values (default: true)
+     * @bodyParam string defaultValue optional Default value for the column
+     * 
+     * @request {
+     *   "columnName": "email",
+     *   "columnType": "VARCHAR(255)",
+     *   "isNullable": false,
+     *   "defaultValue": null
+     * }
+     * 
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Column 'email' added to table 'users' successfully",
+     *   "sql": "ALTER TABLE..."
+     * }
+     * 
+     * @response 400 {
+     *   "status": "error",
+     *   "message": "Column 'email' already exists in table 'users'"
+     * }
+     */
+    public function handleAddColumn(string $tableName): void
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!$input || !isset($input['columnName']) || !isset($input['columnType'])) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Missing required fields: columnName and columnType'
+            ]);
+            return;
+        }
+
+        $columnName = $input['columnName'];
+        $columnType = $input['columnType'];
+        $isNullable = $input['isNullable'] ?? true;
+        $defaultValue = $input['defaultValue'] ?? null;
+
+        $result = $this->database->addColumn($tableName, $columnName, $columnType, $isNullable, $defaultValue);
+
+        if ($result['status'] === 'success') {
+            http_response_code(201);
+        } else {
+            http_response_code(400);
+        }
+
+        echo json_encode($result, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Handle the drop column endpoint
+     * 
+     * Removes a column from an existing table.
+     * 
+     * @param string $tableName The name of the table to modify
+     * @param string $columnName The name of the column to drop
+     * 
+     * @return void Outputs JSON response with operation result
+     * 
+     * @api DELETE /api/tables/{tableName}/columns/{columnName}
+     * 
+     * @urlParam string tableName required The name of the table
+     * @urlParam string columnName required The name of the column to drop
+     * 
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Column 'email' dropped from table 'users' successfully",
+     *   "sql": "ALTER TABLE..."
+     * }
+     * 
+     * @response 400 {
+     *   "status": "error",
+     *   "message": "Column 'email' does not exist in table 'users'"
+     * }
+     */
+    public function handleDropColumn(string $tableName, string $columnName): void
+    {
+        $result = $this->database->dropColumn($tableName, $columnName);
+
+        if ($result['status'] === 'success') {
+            http_response_code(200);
+        } else {
+            http_response_code(400);
+        }
+
+        echo json_encode($result, JSON_PRETTY_PRINT);
+    }
 }

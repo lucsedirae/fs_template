@@ -463,4 +463,301 @@ class Database
             ];
         }
     }
+
+
+    /**
+     * Get detailed table schema information
+     */
+    public function getTableSchema($tableName)
+    {
+        try {
+            $connection = $this->getConnection();
+            if (!$connection) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to connect to database'
+                ];
+            }
+
+            // Validate table name
+            if (!$this->isValidTableName($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid table name.'
+                ];
+            }
+
+            // Check if table exists
+            if (!$this->tableExists($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Table '$tableName' does not exist."
+                ];
+            }
+
+            // Get detailed column information
+            $query = "
+            SELECT 
+                c.column_name,
+                c.data_type,
+                c.character_maximum_length,
+                c.numeric_precision,
+                c.numeric_scale,
+                c.is_nullable,
+                c.column_default,
+                c.ordinal_position,
+                CASE 
+                    WHEN pk.column_name IS NOT NULL THEN true 
+                    ELSE false 
+                END as is_primary_key
+            FROM information_schema.columns c
+            LEFT JOIN (
+                SELECT ku.column_name
+                FROM information_schema.table_constraints tc
+                INNER JOIN information_schema.key_column_usage ku
+                    ON tc.constraint_name = ku.constraint_name
+                    AND tc.table_schema = ku.table_schema
+                WHERE tc.constraint_type = 'PRIMARY KEY'
+                    AND tc.table_schema = 'public'
+                    AND tc.table_name = :table_name
+            ) pk ON c.column_name = pk.column_name
+            WHERE c.table_schema = 'public' 
+                AND c.table_name = :table_name
+            ORDER BY c.ordinal_position
+        ";
+
+            $stmt = $connection->prepare($query);
+            $stmt->bindParam(':table_name', $tableName);
+            $stmt->execute();
+            $columns = $stmt->fetchAll();
+
+            // Get table row count
+            $countQuery = "SELECT COUNT(*) as row_count FROM " . $this->sanitizeTableName($tableName);
+            $stmt = $connection->prepare($countQuery);
+            $stmt->execute();
+            $rowCount = $stmt->fetch()['row_count'];
+
+            return [
+                'status' => 'success',
+                'table_name' => $tableName,
+                'columns' => $columns,
+                'row_count' => $rowCount
+            ];
+
+        } catch (PDOException $e) {
+            error_log("Get table schema error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Failed to retrieve table schema: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Add a new column to an existing table
+     */
+    public function addColumn($tableName, $columnName, $columnType, $isNullable = true, $defaultValue = null)
+    {
+        try {
+            $connection = $this->getConnection();
+            if (!$connection) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to connect to database'
+                ];
+            }
+
+            // Validate inputs
+            if (!$this->isValidTableName($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid table name.'
+                ];
+            }
+
+            if (!$this->isValidColumnName($columnName)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid column name.'
+                ];
+            }
+
+            // Check if table exists
+            if (!$this->tableExists($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Table '$tableName' does not exist."
+                ];
+            }
+
+            // Check if column already exists
+            if ($this->columnExists($tableName, $columnName)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Column '$columnName' already exists in table '$tableName'."
+                ];
+            }
+
+            // Build ALTER TABLE statement
+            $sql = "ALTER TABLE " . $this->sanitizeTableName($tableName) .
+                " ADD COLUMN " . $this->sanitizeColumnName($columnName) .
+                " " . $columnType;
+
+            if (!$isNullable) {
+                $sql .= " NOT NULL";
+            }
+
+            if ($defaultValue !== null) {
+                $sql .= " DEFAULT " . $connection->quote($defaultValue);
+            }
+
+            $stmt = $connection->prepare($sql);
+            $stmt->execute();
+
+            return [
+                'status' => 'success',
+                'message' => "Column '$columnName' added to table '$tableName' successfully.",
+                'sql' => $sql
+            ];
+
+        } catch (PDOException $e) {
+            error_log("Add column error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Failed to add column: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Drop a column from an existing table
+     */
+    public function dropColumn($tableName, $columnName)
+    {
+        try {
+            $connection = $this->getConnection();
+            if (!$connection) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to connect to database'
+                ];
+            }
+
+            // Validate inputs
+            if (!$this->isValidTableName($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid table name.'
+                ];
+            }
+
+            if (!$this->isValidColumnName($columnName)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid column name.'
+                ];
+            }
+
+            // Check if table exists
+            if (!$this->tableExists($tableName)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Table '$tableName' does not exist."
+                ];
+            }
+
+            // Check if column exists
+            if (!$this->columnExists($tableName, $columnName)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Column '$columnName' does not exist in table '$tableName'."
+                ];
+            }
+
+            // Check if this is the only column (PostgreSQL doesn't allow tables with no columns)
+            $columnCount = $this->getColumnCount($tableName);
+            if ($columnCount <= 1) {
+                return [
+                    'status' => 'error',
+                    'message' => "Cannot drop the last column from table '$tableName'."
+                ];
+            }
+
+            // Build ALTER TABLE statement
+            $sql = "ALTER TABLE " . $this->sanitizeTableName($tableName) .
+                " DROP COLUMN " . $this->sanitizeColumnName($columnName);
+
+            $stmt = $connection->prepare($sql);
+            $stmt->execute();
+
+            return [
+                'status' => 'success',
+                'message' => "Column '$columnName' dropped from table '$tableName' successfully.",
+                'sql' => $sql
+            ];
+
+        } catch (PDOException $e) {
+            error_log("Drop column error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Failed to drop column: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Check if a column exists in a table
+     */
+    private function columnExists($tableName, $columnName)
+    {
+        try {
+            $connection = $this->getConnection();
+            if (!$connection)
+                return false;
+
+            $query = "
+            SELECT COUNT(*) 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = :table_name 
+            AND column_name = :column_name
+        ";
+
+            $stmt = $connection->prepare($query);
+            $stmt->bindParam(':table_name', $tableName);
+            $stmt->bindParam(':column_name', $columnName);
+            $stmt->execute();
+
+            return $stmt->fetchColumn() > 0;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get the number of columns in a table
+     */
+    private function getColumnCount($tableName)
+    {
+        try {
+            $connection = $this->getConnection();
+            if (!$connection)
+                return 0;
+
+            $query = "
+            SELECT COUNT(*) 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+            AND table_name = :table_name
+        ";
+
+            $stmt = $connection->prepare($query);
+            $stmt->bindParam(':table_name', $tableName);
+            $stmt->execute();
+
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            return 0;
+        }
+    }
 }

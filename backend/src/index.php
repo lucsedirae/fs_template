@@ -26,5 +26,10 @@ $router->delete('/api/tables/{tableName}', [$controller, 'handleDeleteTable']);
 // Table data routes
 $router->get('/api/tables/{tableName}/data', [$controller, 'handleGetTableData']);
 
+// Table schema routes
+$router->get('/api/tables/{tableName}/schema', [$controller, 'handleGetTableSchema']);
+$router->post('/api/tables/{tableName}/columns', [$controller, 'handleAddColumn']);
+$router->delete('/api/tables/{tableName}/columns/{columnName}', [$controller, 'handleDropColumn']);
+
 // Run the router
 $router->run();
