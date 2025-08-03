@@ -1,0 +1,102 @@
+/* TableCreateForm.css - Minimal Bootstrap 5 enhancements */
+
+/* Smooth transitions for form interactions */
+.btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Form section spacing */
+.card-body .row.g-3 {
+  margin-bottom: 0;
+}
+
+/* Ensure consistent spinner sizing */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Form label consistency */
+.form-label.small {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+/* Form check styling */
+.form-check-label.small {
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+/* Card styling for column items */
+.card.border-light {
+  border-color: #e9ecef !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.card.border-light:hover {
+  border-color: #dee2e6 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  /* Stack form fields on mobile */
+  .row.g-3 .col-md-3,
+  .row.g-3 .col-md-4,
+  .row.g-3 .col-md-2 {
+    margin-bottom: 1rem;
+  }
+
+  /* Adjust button gap on mobile */
+  .d-flex.gap-3 {
+    gap: 1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Stack action buttons on small screens */
+  .d-flex.justify-content-center.gap-3 {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem !important;
+  }
+
+  /* Make buttons full width on mobile */
+  .btn-lg {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* Reduce card padding on mobile */
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Focus styles for better accessibility */
+.form-control:focus,
+.form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Form validation styles */
+.form-control:invalid {
+  border-color: #dc3545;
+}
+
+.form-control:valid {
+  border-color: #198754;
+}
+
+/* Loading state */
+.card-body.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
