@@ -280,23 +280,6 @@ const SettingsForm = ({ className = "" }) => {
                   </select>
                 </div>
 
-                {/* Items Per Page */}
-                <div className="mb-3">
-                  <label htmlFor="itemsPerPage" className="form-label">Items Per Page</label>
-                  <select
-                    className="form-select"
-                    id="itemsPerPage"
-                    value={settings.itemsPerPage}
-                    onChange={(e) => updateSetting('itemsPerPage', parseInt(e.target.value))}
-                    disabled={loading}
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                </div>
-
                 {/* Show Notifications */}
                 <div className="mb-0">
                   <div className="form-check form-switch">

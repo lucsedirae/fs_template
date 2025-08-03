@@ -5,6 +5,51 @@ import DatabaseManager from '../../dev/DatabaseManager/DatabaseManager';
 import SettingsForm from '../../app/SettingsForm/SettingsForm';
 
 /**
+ * Component registry mapping component IDs to their React components
+ * This makes it easy to add new components without modifying the render logic
+ */
+const componentRegistry = {
+    'database': {
+        component: DatabaseManager,
+        title: 'Database Manager',
+        description: 'Manage database tables and structure'
+    },
+    'api': {
+        component: ApiTest,
+        title: 'API Tester',
+        description: 'Test backend API endpoints'
+    },
+    'settings': {
+        component: SettingsForm,
+        title: 'Settings',
+        description: 'Application settings and configuration'
+    }
+    // Add new components here as they're created:
+    // 'users': {
+    //   component: UserManager,
+    //   title: 'User Management',
+    //   description: 'Manage user accounts and permissions'
+    // }
+};
+
+/**
+ * Get component configuration by ID
+ * @param {string} componentId - ID of the component
+ * @return {Object|null} Component configuration object
+ */
+const getComponentConfig = (componentId) => {
+    return componentRegistry[componentId] || null;
+};
+
+/**
+ * Get list of available components for debugging/development
+ * @return {Array} Array of available component IDs
+ */
+const getAvailableComponents = () => {
+    return Object.keys(componentRegistry);
+};
+
+/**
  * MainContent Component
  * 
  * Renders the main content area of the dashboard based on the active component.
@@ -22,43 +67,6 @@ const MainContent = ({
     className = "",
     onComponentChange
 }) => {
-
-    /**
-     * Component registry mapping component IDs to their React components
-     * This makes it easy to add new components without modifying the render logic
-     */
-    const componentRegistry = {
-        'database': {
-            component: DatabaseManager,
-            title: 'Database Manager',
-            description: 'Manage database tables and structure'
-        },
-        'api': {
-            component: ApiTest,
-            title: 'API Tester',
-            description: 'Test backend API endpoints'
-        },
-        'settings': {
-            component: SettingsForm,
-            title: 'Settings',
-            description: 'Application settings and configuration'
-        }
-        // Add new components here as they're created:
-        // 'users': {
-        //   component: UserManager,
-        //   title: 'User Management',
-        //   description: 'Manage user accounts and permissions'
-        // }
-    };
-
-    /**
-     * Get component configuration by ID
-     * @param {string} componentId - ID of the component
-     * @return {Object|null} Component configuration object
-     */
-    const getComponentConfig = (componentId) => {
-        return componentRegistry[componentId] || null;
-    };
 
     /**
      * Render the active component based on current selection
@@ -100,14 +108,6 @@ const MainContent = ({
             onComponentChange(activeComponent, config);
         }
     }, [activeComponent, onComponentChange]);
-
-    /**
-     * Get list of available components for debugging/development
-     * @return {Array} Array of available component IDs
-     */
-    const getAvailableComponents = () => {
-        return Object.keys(componentRegistry);
-    };
 
     // Development mode: log available components
     React.useEffect(() => {
