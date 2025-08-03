@@ -1,0 +1,71 @@
+/* TablesList.css - Minimal Bootstrap 5 enhancements */
+
+/* Smooth transitions for card interactions */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Badge styling improvements */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+/* Empty state styling */
+.text-center .fs-1 {
+  font-size: 4rem !important;
+  opacity: 0.6;
+}
+
+.text-center h4 {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.text-center p {
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+/* Card header enhancements */
+.card-header {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.card-header .card-title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Responsive improvements */
+@media (max-width: 576px) {
+  /* Adjust empty state on mobile */
+  .text-center .fs-1 {
+    font-size: 3rem !important;
+  }
+  
+  .text-center h4 {
+    font-size: 1.25rem;
+  }
+  
+  .text-center p {
+    font-size: 0.9rem;
+  }
+
+  /* Stack header content on very small screens */
+  .card-header.d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .card-header .badge {
+    align-self: flex-end;
+  }
+}
