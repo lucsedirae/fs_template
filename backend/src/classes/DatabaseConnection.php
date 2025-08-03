@@ -1,62 +1,57 @@
 <?php
-/**
- * DatabaseConnection Class
- * 
- * Handles database connection management and basic connection operations.
- * Follows the singleton pattern to ensure only one connection instance.
- * 
- * @package    Backend\Classes
- * @author     Your Team
- * @version    1.0.0
- * @since      PHP 7.4
- */
 
 class DatabaseConnection
 {
-    /**
-     * Database connection configuration
-     * 
-     * @var array
-     */
     private $config;
-
-    /**
-     * PDO connection instance
-     * 
-     * @var PDO|null
-     */
     private $connection;
-
-    /**
-     * Singleton instance
-     * 
-     * @var DatabaseConnection|null
-     */
     private static $instance = null;
 
-    /**
-     * DatabaseConnection constructor
-     * 
-     * @param array $config Database configuration array
-     */
     private function __construct(array $config = [])
     {
-        $this->config = array_merge([
-            'host' => 'database',
-            'port' => '5432',
-            'dbname' => 'appdb',
-            'username' => 'appuser',
-            'password' => 'apppassword'
-        ], $config);
+        $envConfig = [
+            'host' => $this->getEnvVar('DB_HOST'),
+            'port' => $this->getEnvVar('DB_PORT'),
+            'dbname' => $this->getEnvVar('DB_NAME', $this->getEnvVar('DB_DATABASE')),
+            'username' => $this->getEnvVar('DB_USERNAME', $this->getEnvVar('DB_USER')),
+            'password' => $this->getEnvVar('DB_PASSWORD')
+        ];
+
+        foreach ($envConfig as $key => $value) {
+            if ($value === null) {
+                throw new DatabaseException("Required environment variable for '{$key}' not set. Please check your Docker configuration.");
+            }
+        }
+
+        $this->config = array_merge($envConfig, $config);
+        $this->logConfiguration();
     }
 
-    /**
-     * Get singleton instance
-     * 
-     * @param array $config Optional configuration override
-     * @return DatabaseConnection
-     */
-    public static function getInstance(array $config = []): DatabaseConnection
+    private function getEnvVar($key, $fallback = null)
+    {
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+
+        if ($fallback !== null) {
+            return $fallback;
+        }
+
+        return null;
+    }
+
+    private function logConfiguration()
+    {
+        $logConfig = $this->config;
+        $logConfig['password'] = '***';
+        error_log("DatabaseConnection config: " . json_encode($logConfig));
+    }
+
+    public static function getInstance(array $config = [])
     {
         if (self::$instance === null) {
             self::$instance = new self($config);
@@ -64,13 +59,7 @@ class DatabaseConnection
         return self::$instance;
     }
 
-    /**
-     * Get database connection
-     * 
-     * @return PDO|null
-     * @throws DatabaseException If connection fails
-     */
-    public function getConnection(): ?PDO
+    public function getConnection()
     {
         if ($this->connection === null) {
             $this->connect();
@@ -78,13 +67,7 @@ class DatabaseConnection
         return $this->connection;
     }
 
-    /**
-     * Establish database connection
-     * 
-     * @return void
-     * @throws DatabaseException If connection fails
-     */
-    private function connect(): void
+    private function connect()
     {
         try {
             $dsn = sprintf(
@@ -105,18 +88,15 @@ class DatabaseConnection
                 ]
             );
 
+            error_log("Database connection established successfully");
+
         } catch (PDOException $exception) {
             error_log("Database connection error: " . $exception->getMessage());
             throw new DatabaseException("Failed to connect to database: " . $exception->getMessage());
         }
     }
 
-    /**
-     * Test database connection
-     * 
-     * @return array Connection test result
-     */
-    public function testConnection(): array
+    public function testConnection()
     {
         try {
             $connection = $this->getConnection();
@@ -134,7 +114,12 @@ class DatabaseConnection
             return [
                 'status' => 'success',
                 'message' => 'Database connection successful',
-                'postgres_version' => $version['version']
+                'postgres_version' => $version['version'],
+                'connection_config' => [
+                    'host' => $this->config['host'],
+                    'port' => $this->config['port'],
+                    'database' => $this->config['dbname']
+                ]
             ];
 
         } catch (Exception $e) {
@@ -145,15 +130,7 @@ class DatabaseConnection
         }
     }
 
-    /**
-     * Execute a prepared statement
-     * 
-     * @param string $query SQL query
-     * @param array $params Query parameters
-     * @return PDOStatement
-     * @throws DatabaseException If query execution fails
-     */
-    public function execute(string $query, array $params = []): PDOStatement
+    public function execute(string $query, array $params = [])
     {
         try {
             $connection = $this->getConnection();
@@ -166,54 +143,31 @@ class DatabaseConnection
         }
     }
 
-    /**
-     * Begin database transaction
-     * 
-     * @return bool
-     */
-    public function beginTransaction(): bool
+    public function beginTransaction()
     {
         return $this->getConnection()->beginTransaction();
     }
 
-    /**
-     * Commit database transaction
-     * 
-     * @return bool
-     */
-    public function commit(): bool
+    public function commit()
     {
         return $this->getConnection()->commit();
     }
 
-    /**
-     * Rollback database transaction
-     * 
-     * @return bool
-     */
-    public function rollback(): bool
+    public function rollback()
     {
         return $this->getConnection()->rollBack();
     }
 
-    /**
-     * Get last insert ID
-     * 
-     * @param string|null $sequence Sequence name for PostgreSQL
-     * @return string
-     */
-    public function getLastInsertId(?string $sequence = null): string
+    public function getLastInsertId($sequence = null)
     {
         return $this->getConnection()->lastInsertId($sequence);
     }
 
-    /**
-     * Prevent cloning of singleton
-     */
-    private function __clone() {}
+    private function __clone() 
+    {
+    }
 
-    /**
-     * Prevent unserialization of singleton
-     */
-    public function __wakeup() {}
+    public function __wakeup() 
+    {
+    }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import TableCard from './TableCard/TableCard';
+import TablesList from './TablesList/TablesList.js';
 import TableViewModal from './TableViewModal/TableViewModal';
 import TableEditModal from './TableEditModal/TableEditModal';
 import TableCreateForm from './TableCreateForm/TableCreateForm';
@@ -271,48 +271,14 @@ const DatabaseManager = () => {
         />
       )}
 
-      {/* Tables List */}
-      <div className="row">
-        <div className="col">
-          <div className="card shadow">
-            <div className="card-header bg-light d-flex justify-content-between align-items-center">
-              <h5 className="card-title mb-0">
-                <span className="me-2">📋</span>
-                Existing Tables
-              </h5>
-              {tables.length > 0 && (
-                <span className="badge bg-primary">
-                  {tables.length} table{tables.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-            <div className="card-body">
-              {tables.length === 0 ? (
-                <div className="text-center py-5">
-                  <div className="text-muted">
-                    <span className="fs-1 d-block mb-3">📂</span>
-                    <h4 className="mb-3">No tables found</h4>
-                    <p className="mb-0">Create your first table to get started!</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="row g-4">
-                  {tables.map((table) => (
-                    <TableCard
-                      key={table.table_name}
-                      table={table}
-                      onDelete={deleteTable}
-                      onView={viewTable}
-                      onEdit={editTable}
-                      loading={loading}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Tables List - Now using the extracted component */}
+      <TablesList
+        tables={tables}
+        loading={loading}
+        onDelete={deleteTable}
+        onView={viewTable}
+        onEdit={editTable}
+      />
 
       {/* Table View Modal */}
       <TableViewModal
