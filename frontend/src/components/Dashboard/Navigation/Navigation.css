@@ -1,0 +1,95 @@
+/* Navigation Component - Bootstrap 5 enhancements */
+
+/* Ensure consistent minimum height */
+.min-vh-100 {
+    min-height: 100vh !important;
+}
+
+/* Smooth transition for menu buttons */
+.btn {
+    transition: all 0.3s ease;
+}
+
+/* Custom hover effects for sidebar buttons */
+.btn-outline-light:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-light.shadow-sm {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure proper text wrapping in sidebar */
+.btn .fw-semibold {
+    line-height: 1.2;
+}
+
+.btn small {
+    line-height: 1.3;
+    display: block;
+}
+
+/* Category header styling */
+.text-uppercase.text-white-50 {
+    font-weight: 700 !important;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+/* Navigation header styling */
+.border-bottom.border-white.border-opacity-25 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Icon alignment */
+.fs-5.me-3 {
+    flex-shrink: 0;
+    width: 1.5rem;
+    text-align: center;
+}
+
+/* Active state text colors */
+.btn-light .text-muted {
+    color: #6c757d !important;
+}
+
+.btn-outline-light .text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Focus states for accessibility */
+.btn:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .min-vh-100 {
+        min-height: auto !important;
+    }
+
+    /* Adjust padding on mobile */
+    .p-4 {
+        padding: 1.5rem !important;
+    }
+
+    .p-3 {
+        padding: 1rem !important;
+    }
+
+    /* Smaller button padding on mobile */
+    .btn.p-3 {
+        padding: 0.75rem !important;
+    }
+
+    /* Adjust font sizes on mobile */
+    .btn .fw-semibold {
+        font-size: 0.9rem;
+    }
+
+    .btn small {
+        font-size: 0.75rem;
+    }
+}

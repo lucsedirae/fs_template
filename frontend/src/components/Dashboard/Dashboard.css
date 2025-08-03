@@ -1,33 +1,27 @@
-/* Custom Dashboard styles to complement Bootstrap */
+/* Dashboard Component - Main container styles */
 
-/* Ensure consistent minimum height */
+/* Ensure consistent minimum height for main content */
 .min-vh-100 {
   min-height: 100vh !important;
 }
 
-/* Smooth transition for menu buttons */
-.btn {
-  transition: all 0.3s ease;
+/* Main content area styling */
+.bg-white.min-vh-100 {
+  background-color: #ffffff !important;
 }
 
-/* Custom hover effects for sidebar buttons */
-.btn-outline-light:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Content padding consistency */
+.p-4 {
+  padding: 1.5rem !important;
 }
 
-.btn-light.shadow-sm {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+/* Row and column spacing */
+.row.g-0 {
+  margin: 0;
 }
 
-/* Ensure proper text wrapping in sidebar */
-.btn .fw-semibold {
-  line-height: 1.2;
-}
-
-.btn small {
-  line-height: 1.3;
-  display: block;
+.row.g-0>* {
+  padding: 0;
 }
 
 /* Responsive adjustments */
@@ -35,4 +29,21 @@
   .min-vh-100 {
     min-height: auto !important;
   }
+
+  /* Adjust main content padding on mobile */
+  .col-md-9.col-lg-10 .p-4 {
+    padding: 1rem !important;
+  }
+}
+
+/* Smooth transitions for content area */
+.bg-white.min-vh-100 {
+  transition: all 0.3s ease;
+}
+
+/* Ensure proper container fluid behavior */
+.container-fluid.p-0 {
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
 }

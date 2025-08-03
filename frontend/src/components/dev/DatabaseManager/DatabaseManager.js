@@ -33,14 +33,14 @@ const DatabaseManager = () => {
   const fetchTables = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/tables`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setTables(data.tables || []);
     } catch (err) {
@@ -182,13 +182,10 @@ const DatabaseManager = () => {
       {/* Header */}
       <div className="row mb-4">
         <div className="col">
-          <div className="text-center py-4 border-bottom">
-            <h2 className="mb-3">
-              <span className="me-2">🗄️</span>
-              Database Table Manager
-            </h2>
-            <p className="text-muted mb-0">Create and manage your database tables</p>
-          </div>
+          <h2 className="mb-3">
+            <span className="me-2">🗄️</span>
+            Database Table Manager
+          </h2>
         </div>
       </div>
 
@@ -219,7 +216,7 @@ const DatabaseManager = () => {
       <div className="row mb-4">
         <div className="col">
           <div className="d-flex flex-wrap justify-content-center gap-3">
-            <button 
+            <button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className="btn btn-primary"
               disabled={loading}
@@ -236,17 +233,17 @@ const DatabaseManager = () => {
                 </>
               )}
             </button>
-            
-            <button 
+
+            <button
               onClick={fetchTables}
               className="btn btn-outline-primary"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <span 
-                    className="spinner-border spinner-border-sm me-2" 
-                    role="status" 
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
                     aria-hidden="true"
                   ></span>
                   Loading...

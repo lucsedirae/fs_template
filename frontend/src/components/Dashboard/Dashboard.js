@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import './Dashboard.css';
-import ApiTest from '../dev/ApiTest/ApiTest';
-import DatabaseManager from '../dev/DatabaseManager/DatabaseManager';
+import Navigation from './Navigation/Navigation';
+import MainContent from './MainContent/MainContent';
 
+/**
+ * Dashboard Component
+ * 
+ * Main dashboard container that coordinates between navigation and main content.
+ * Acts as the primary layout manager for the dashboard interface.
+ */
 const Dashboard = () => {
+  // Active component state
   const [activeComponent, setActiveComponent] = useState('database');
 
+  // Menu items configuration
   const menuItems = [
     {
       id: 'database',
@@ -21,115 +29,51 @@ const Dashboard = () => {
       description: 'Test backend API endpoints',
       category: 'dev'
     }
+    // Add more menu items here as needed
+    // {
+    //   id: 'settings',
+    //   name: 'Settings',
+    //   icon: '⚙️',
+    //   description: 'Application settings',
+    //   category: 'app'
+    // }
   ];
 
-  const renderActiveComponent = () => {
-    switch (activeComponent) {
-      case 'database':
-        return <DatabaseManager />;
-      case 'api':
-        return <ApiTest />;
-      default:
-        return <DatabaseManager />;
-    }
+  /**
+   * Handle navigation menu item click
+   * @param {string} componentId - ID of the component to activate
+   */
+  const handleMenuItemClick = (componentId) => {
+    setActiveComponent(componentId);
   };
 
-  // Group menu items by category
-  const devItems = menuItems.filter(item => item.category === 'dev');
-  const appItems = menuItems.filter(item => item.category === 'app');
+  /**
+   * Handle component change events from MainContent
+   * @param {string} componentId - ID of the active component
+   * @param {Object} componentConfig - Configuration of the active component
+   */
+  const handleComponentChange = (componentId, componentConfig) => {
+    // Optional: Add analytics, logging, or other side effects here
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Dashboard: Component changed to:', componentId, componentConfig);
+    }
+  };
 
   return (
     <div className="container-fluid p-0">
       <div className="row g-0">
-        {/* Sidebar */}
-        <div className="col-md-3 col-lg-2">
-          <div className="bg-primary text-white p-0 min-vh-100 shadow-sm">
-            {/* Dashboard Header */}
-            <div className="p-4 border-bottom border-white border-opacity-25">
-              <h4 className="mb-2 fw-bold">
-                <span className="me-2">🛠️</span>
-                Dashboard
-              </h4>
-              <small className="text-white-50">Development & App Tools</small>
-            </div>
-            
-            {/* Navigation Menu */}
-            <nav className="p-3">
-              {/* Development Tools Section */}
-              {devItems.length > 0 && (
-                <div className="mb-4">
-                  <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{fontSize: '0.75rem', letterSpacing: '1px'}}>
-                    Development Tools
-                  </h6>
-                  <div className="d-grid gap-2">
-                    {devItems.map((item) => (
-                      <button
-                        key={item.id}
-                        className={`btn text-start p-3 border-0 rounded-3 ${
-                          activeComponent === item.id 
-                            ? 'btn-light text-primary shadow-sm' 
-                            : 'btn-outline-light text-white'
-                        }`}
-                        onClick={() => setActiveComponent(item.id)}
-                      >
-                        <div className="d-flex align-items-center">
-                          <span className="fs-5 me-3">{item.icon}</span>
-                          <div>
-                            <div className="fw-semibold">{item.name}</div>
-                            <small className={activeComponent === item.id ? 'text-muted' : 'text-white-75'}>
-                              {item.description}
-                            </small>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* App Components Section - for future use */}
-              {appItems.length > 0 && (
-                <div className="mb-4">
-                  <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{fontSize: '0.75rem', letterSpacing: '1px'}}>
-                    Application
-                  </h6>
-                  <div className="d-grid gap-2">
-                    {appItems.map((item) => (
-                      <button
-                        key={item.id}
-                        className={`btn text-start p-3 border-0 rounded-3 ${
-                          activeComponent === item.id 
-                            ? 'btn-light text-primary shadow-sm' 
-                            : 'btn-outline-light text-white'
-                        }`}
-                        onClick={() => setActiveComponent(item.id)}
-                      >
-                        <div className="d-flex align-items-center">
-                          <span className="fs-5 me-3">{item.icon}</span>
-                          <div>
-                            <div className="fw-semibold">{item.name}</div>
-                            <small className={activeComponent === item.id ? 'text-muted' : 'text-white-75'}>
-                              {item.description}
-                            </small>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </nav>
-          </div>
-        </div>
+        {/* Navigation Sidebar */}
+        <Navigation
+          menuItems={menuItems}
+          activeComponent={activeComponent}
+          onMenuItemClick={handleMenuItemClick}
+        />
 
         {/* Main Content Area */}
-        <div className="col-md-9 col-lg-10">
-          <div className="bg-white min-vh-100">
-            <div className="p-4">
-              {renderActiveComponent()}
-            </div>
-          </div>
-        </div>
+        <MainContent
+          activeComponent={activeComponent}
+          onComponentChange={handleComponentChange}
+        />
       </div>
     </div>
   );
