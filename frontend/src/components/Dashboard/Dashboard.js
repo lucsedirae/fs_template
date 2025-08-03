@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import './Dashboard.css';
 import Navigation from './Navigation/Navigation';
-import ApiTest from '../dev/ApiTest/ApiTest';
-import DatabaseManager from '../dev/DatabaseManager/DatabaseManager';
+import MainContent from './MainContent/MainContent';
 
 /**
  * Dashboard Component
  * 
- * Main dashboard container that manages navigation and component rendering.
- * Coordinates between the navigation sidebar and the main content area.
+ * Main dashboard container that coordinates between navigation and main content.
+ * Acts as the primary layout manager for the dashboard interface.
  */
 const Dashboard = () => {
   // Active component state
@@ -49,17 +48,14 @@ const Dashboard = () => {
   };
 
   /**
-   * Render the active component based on current selection
-   * @return {JSX.Element} The active component
+   * Handle component change events from MainContent
+   * @param {string} componentId - ID of the active component
+   * @param {Object} componentConfig - Configuration of the active component
    */
-  const renderActiveComponent = () => {
-    switch (activeComponent) {
-      case 'database':
-        return <DatabaseManager />;
-      case 'api':
-        return <ApiTest />;
-      default:
-        return <DatabaseManager />;
+  const handleComponentChange = (componentId, componentConfig) => {
+    // Optional: Add analytics, logging, or other side effects here
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Dashboard: Component changed to:', componentId, componentConfig);
     }
   };
 
@@ -74,13 +70,10 @@ const Dashboard = () => {
         />
 
         {/* Main Content Area */}
-        <div className="col-md-9 col-lg-10">
-          <div className="bg-white min-vh-100">
-            <div className="p-4">
-              {renderActiveComponent()}
-            </div>
-          </div>
-        </div>
+        <MainContent
+          activeComponent={activeComponent}
+          onComponentChange={handleComponentChange}
+        />
       </div>
     </div>
   );
