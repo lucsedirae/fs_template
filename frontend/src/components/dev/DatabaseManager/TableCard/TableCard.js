@@ -9,8 +9,9 @@ import './TableCard.css';
  * @param {Object} props
  * @param {Object} props.table - Table object with table_name and table_type
  * @param {Function} props.onDelete - Callback function when delete button is clicked
- * @param {boolean} props.loading - Whether any operation is in progress
  * @param {Function} props.onView - Optional callback for viewing table details
+ * @param {Function} props.onEdit - Optional callback for editing table structure
+ * @param {boolean} props.loading - Whether any operation is in progress
  * @param {string} props.className - Additional CSS classes for the card container
  */
 const TableCard = ({ 
@@ -18,6 +19,7 @@ const TableCard = ({
   onDelete, 
   loading = false, 
   onView = null,
+  onEdit = null,
   className = "" 
 }) => {
   const handleDelete = () => {
@@ -29,6 +31,12 @@ const TableCard = ({
   const handleView = () => {
     if (onView) {
       onView(table.table_name);
+    }
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(table.table_name);
     }
   };
 
@@ -69,10 +77,23 @@ const TableCard = ({
                   onClick={handleView}
                   className="btn btn-outline-primary btn-sm flex-fill"
                   disabled={loading}
-                  title="View table details"
+                  title="View table data"
                 >
                   <span className="me-1" role="img" aria-label="View">👁️</span>
                   View
+                </button>
+              )}
+
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="btn btn-outline-warning btn-sm flex-fill"
+                  disabled={loading}
+                  title="Edit table structure"
+                >
+                  <span className="me-1" role="img" aria-label="Edit">✏️</span>
+                  Edit
                 </button>
               )}
               

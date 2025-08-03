@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import TableCard from './TableCard/TableCard';
+import TableViewModal from './TableViewModal/TableViewModal';
+import TableEditModal from './TableEditModal/TableEditModal';
 
 const DatabaseManager = () => {
   const [tables, setTables] = useState([]);
@@ -11,6 +13,11 @@ const DatabaseManager = () => {
   const [columns, setColumns] = useState([
     { name: 'id', type: 'SERIAL', isPrimary: true, nullable: false }
   ]);
+
+  // Modal state
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
 
   const API_BASE_URL = 'http://localhost:8080';
 
@@ -157,11 +164,34 @@ const DatabaseManager = () => {
     }
   };
 
-  // Handle viewing table details (placeholder for future functionality)
+  // Handle viewing table details - UPDATED IMPLEMENTATION
   const viewTable = (tableName) => {
-    console.log(`Viewing table: ${tableName}`);
-    // TODO: Implement table viewing functionality
-    alert(`View functionality for "${tableName}" coming soon!`);
+    setSelectedTable(tableName);
+    setShowViewModal(true);
+  };
+
+  // Handle editing table structure - NEW IMPLEMENTATION
+  const editTable = (tableName) => {
+    setSelectedTable(tableName);
+    setShowEditModal(true);
+  };
+
+  // Handle closing the view modal
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setSelectedTable(null);
+  };
+
+  // Handle closing the edit modal
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedTable(null);
+  };
+
+  // Handle table updated from edit modal
+  const handleTableUpdated = () => {
+    // Refresh the tables list when a table structure is modified
+    fetchTables();
   };
 
   const columnTypes = [
@@ -457,6 +487,7 @@ const DatabaseManager = () => {
                       table={table}
                       onDelete={deleteTable}
                       onView={viewTable}
+                      onEdit={editTable}
                       loading={loading}
                     />
                   ))}
@@ -466,6 +497,23 @@ const DatabaseManager = () => {
           </div>
         </div>
       </div>
+
+      {/* Table View Modal */}
+      <TableViewModal
+        show={showViewModal}
+        onHide={handleCloseViewModal}
+        tableName={selectedTable}
+        apiBaseUrl={API_BASE_URL}
+      />
+
+      {/* Table Edit Modal */}
+      <TableEditModal
+        show={showEditModal}
+        onHide={handleCloseEditModal}
+        tableName={selectedTable}
+        apiBaseUrl={API_BASE_URL}
+        onTableUpdated={handleTableUpdated}
+      />
     </div>
   );
 };
