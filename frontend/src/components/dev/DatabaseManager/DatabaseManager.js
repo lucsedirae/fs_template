@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import TableCard from './TableCard/TableCard';
+import TableViewModal from './TableViewModal/TableViewModal';
 
 const DatabaseManager = () => {
   const [tables, setTables] = useState([]);
@@ -11,6 +12,10 @@ const DatabaseManager = () => {
   const [columns, setColumns] = useState([
     { name: 'id', type: 'SERIAL', isPrimary: true, nullable: false }
   ]);
+
+  // Modal state
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
 
   const API_BASE_URL = 'http://localhost:8080';
 
@@ -157,11 +162,16 @@ const DatabaseManager = () => {
     }
   };
 
-  // Handle viewing table details (placeholder for future functionality)
+  // Handle viewing table details - NEW IMPLEMENTATION
   const viewTable = (tableName) => {
-    console.log(`Viewing table: ${tableName}`);
-    // TODO: Implement table viewing functionality
-    alert(`View functionality for "${tableName}" coming soon!`);
+    setSelectedTable(tableName);
+    setShowViewModal(true);
+  };
+
+  // Handle closing the view modal
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setSelectedTable(null);
   };
 
   const columnTypes = [
@@ -466,6 +476,14 @@ const DatabaseManager = () => {
           </div>
         </div>
       </div>
+
+      {/* Table View Modal */}
+      <TableViewModal
+        show={showViewModal}
+        onHide={handleCloseViewModal}
+        tableName={selectedTable}
+        apiBaseUrl={API_BASE_URL}
+      />
     </div>
   );
 };

@@ -23,5 +23,8 @@ $router->get('/api/tables', [$controller, 'handleGetTables']);
 $router->post('/api/tables', [$controller, 'handleCreateTable']);
 $router->delete('/api/tables/{tableName}', [$controller, 'handleDeleteTable']);
 
+// Table data routes
+$router->get('/api/tables/{tableName}/data', [$controller, 'handleGetTableData']);
+
 // Run the router
 $router->run();
