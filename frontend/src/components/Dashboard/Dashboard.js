@@ -28,15 +28,14 @@ const Dashboard = () => {
       icon: '🔗',
       description: 'Test backend API endpoints',
       category: 'dev'
+    },
+    {
+      id: 'settings',
+      name: 'Settings',
+      icon: '⚙️',
+      description: 'Application settings and configuration',
+      category: 'app'
     }
-    // Add more menu items here as needed
-    // {
-    //   id: 'settings',
-    //   name: 'Settings',
-    //   icon: '⚙️',
-    //   description: 'Application settings',
-    //   category: 'app'
-    // }
   ];
 
   /**

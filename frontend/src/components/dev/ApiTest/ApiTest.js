@@ -14,14 +14,14 @@ const ApiTest = () => {
   const callApi = useCallback(async (endpoint, setResponse) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setResponse({
         status: response.status,
@@ -71,7 +71,7 @@ const ApiTest = () => {
             </small>
           </div>
           <div className="bg-light border rounded p-3">
-            <pre className="mb-0 text-wrap" style={{fontSize: '0.875rem', lineHeight: '1.4'}}>
+            <pre className="mb-0 text-wrap" style={{ fontSize: '0.875rem', lineHeight: '1.4' }}>
               {JSON.stringify(response.data, null, 2)}
             </pre>
           </div>
@@ -85,13 +85,10 @@ const ApiTest = () => {
       {/* Header */}
       <div className="row mb-4">
         <div className="col">
-          <div className="text-center py-4 border-bottom">
-            <h2 className="mb-3">
-              <span className="me-2">🔗</span>
-              Backend API Test
-            </h2>
-            <p className="text-muted mb-0">Test your PHP backend endpoints</p>
-          </div>
+          <h2 className="mb-3">
+            <span className="me-2">🔗</span>
+            Backend API Test
+          </h2>
         </div>
       </div>
 
@@ -113,8 +110,8 @@ const ApiTest = () => {
       <div className="row mb-4">
         <div className="col">
           <div className="d-flex flex-wrap justify-content-center gap-3">
-            <button 
-              onClick={testHelloEndpoint} 
+            <button
+              onClick={testHelloEndpoint}
               disabled={loading}
               className="btn btn-info"
             >
@@ -127,9 +124,9 @@ const ApiTest = () => {
                 'Test /api/hello'
               )}
             </button>
-            
-            <button 
-              onClick={testStatusEndpoint} 
+
+            <button
+              onClick={testStatusEndpoint}
               disabled={loading}
               className="btn btn-info"
             >
@@ -143,8 +140,8 @@ const ApiTest = () => {
               )}
             </button>
 
-            <button 
-              onClick={testDbEndpoint} 
+            <button
+              onClick={testDbEndpoint}
               disabled={loading}
               className="btn btn-success"
             >
@@ -157,9 +154,9 @@ const ApiTest = () => {
                 'Test /api/db-test'
               )}
             </button>
-            
-            <button 
-              onClick={clearResponses} 
+
+            <button
+              onClick={clearResponses}
               className="btn btn-outline-danger"
             >
               Clear Results
