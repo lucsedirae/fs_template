@@ -1,101 +1,62 @@
 <?php
-// backend/src/Database.php
+/**
+ * Database Class (Refactored)
+ * 
+ * Main database operations class that coordinates between connection management,
+ * validation, and query building components. Focuses on business logic and
+ * provides a clean API for database operations.
+ * 
+ * @package    Backend\Classes
+ * @author     Your Team
+ * @version    2.0.0
+ * @since      PHP 7.4
+ */
+
+// Include required classes
+require_once __DIR__ . '/classes/DatabaseConnection.php';
+require_once __DIR__ . '/classes/DatabaseException.php';
+require_once __DIR__ . '/classes/DatabaseValidator.php';
+require_once __DIR__ . '/classes/QueryBuilder.php';
 
 class Database
 {
-    private $host;
-    private $db_name;
-    private $username;
-    private $password;
-    private $port;
-    private $conn;
+    /**
+     * Database connection instance
+     * 
+     * @var DatabaseConnection
+     */
+    private $connection;
 
-    public function __construct()
+    /**
+     * Database constructor
+     * 
+     * @param array $config Optional database configuration
+     */
+    public function __construct(array $config = [])
     {
-        // Database configuration from Docker environment
-        $this->host = 'database'; // Docker service name
-        $this->db_name = 'appdb';
-        $this->username = 'appuser';
-        $this->password = 'apppassword';
-        $this->port = '5432';
+        $this->connection = DatabaseConnection::getInstance($config);
     }
 
-    // Get database connection
-    public function getConnection()
+    /**
+     * Test database connection
+     * 
+     * @return array Connection test result
+     */
+    public function testConnection(): array
     {
-        $this->conn = null;
-
-        try {
-            $dsn = "pgsql:host=" . $this->host .
-                ";port=" . $this->port .
-                ";dbname=" . $this->db_name;
-
-            $this->conn = new PDO($dsn, $this->username, $this->password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-
-        } catch (PDOException $exception) {
-            error_log("Connection error: " . $exception->getMessage());
-            return null;
-        }
-
-        return $this->conn;
+        return $this->connection->testConnection();
     }
 
-    // Test database connection
-    public function testConnection()
-    {
-        $connection = $this->getConnection();
-
-        if ($connection === null) {
-            return [
-                'status' => 'error',
-                'message' => 'Failed to connect to database'
-            ];
-        }
-
-        try {
-            // Simple query to test connection
-            $stmt = $connection->query('SELECT version()');
-            $version = $stmt->fetch();
-
-            return [
-                'status' => 'success',
-                'message' => 'Database connection successful',
-                'postgres_version' => $version['version']
-            ];
-        } catch (PDOException $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Database query failed: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    // Get list of all tables
-    public function getTables()
+    /**
+     * Get list of all tables
+     * 
+     * @return array Operation result
+     */
+    public function getTables(): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
-            $query = "
-                SELECT 
-                    table_name,
-                    table_type
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_type = 'BASE TABLE'
-                ORDER BY table_name
-            ";
-
-            $stmt = $connection->prepare($query);
-            $stmt->execute();
+            $query = QueryBuilder::buildGetTablesQuery();
+            $stmt = $this->connection->execute($query);
             $tables = $stmt->fetchAll();
 
             return [
@@ -104,7 +65,10 @@ class Database
                 'count' => count($tables)
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Get tables error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -113,23 +77,31 @@ class Database
         }
     }
 
-    // Create a new table
-    public function createTable($tableName, $columns)
+    /**
+     * Create a new table
+     * 
+     * @param string $tableName Table name
+     * @param array $columns Array of column definitions
+     * @return array Operation result
+     */
+    public function createTable(string $tableName, array $columns): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
+            // Validate table name
+            $tableValidation = DatabaseValidator::validateTableName($tableName);
+            if (!$tableValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Failed to connect to database'
+                    'message' => implode(', ', $tableValidation['errors'])
                 ];
             }
 
-            // Validate table name
-            if (!$this->isValidTableName($tableName)) {
+            // Validate columns
+            $columnsValidation = DatabaseValidator::validateTableColumns($columns);
+            if (!$columnsValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name. Use only letters, numbers, and underscores.'
+                    'message' => implode(', ', $columnsValidation['errors'])
                 ];
             }
 
@@ -137,63 +109,24 @@ class Database
             if ($this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' already exists."
+                    'message' => "Table '{$tableName}' already exists"
                 ];
             }
 
-            // Build CREATE TABLE SQL
-            $sql = "CREATE TABLE " . $this->sanitizeTableName($tableName) . " (\n";
-            $columnDefinitions = [];
-            $primaryKeys = [];
-
-            foreach ($columns as $column) {
-                if (empty($column['name'])) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Column name cannot be empty.'
-                    ];
-                }
-
-                if (!$this->isValidColumnName($column['name'])) {
-                    return [
-                        'status' => 'error',
-                        'message' => "Invalid column name: '{$column['name']}'. Use only letters, numbers, and underscores."
-                    ];
-                }
-
-                $columnDef = $this->sanitizeColumnName($column['name']) . ' ' . $column['type'];
-
-                if (isset($column['nullable']) && !$column['nullable']) {
-                    $columnDef .= ' NOT NULL';
-                }
-
-                if (isset($column['isPrimary']) && $column['isPrimary']) {
-                    $primaryKeys[] = $this->sanitizeColumnName($column['name']);
-                }
-
-                $columnDefinitions[] = $columnDef;
-            }
-
-            $sql .= implode(",\n", $columnDefinitions);
-
-            // Add primary key constraint if any
-            if (!empty($primaryKeys)) {
-                $sql .= ",\nPRIMARY KEY (" . implode(', ', $primaryKeys) . ")";
-            }
-
-            $sql .= "\n)";
-
-            // Execute the CREATE TABLE statement
-            $stmt = $connection->prepare($sql);
-            $stmt->execute();
+            // Build and execute CREATE TABLE query
+            $sql = QueryBuilder::buildCreateTableQuery($tableName, $columns);
+            $this->connection->execute($sql);
 
             return [
                 'status' => 'success',
-                'message' => "Table '$tableName' created successfully.",
+                'message' => "Table '{$tableName}' created successfully",
                 'sql' => $sql
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Create table error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -202,23 +135,22 @@ class Database
         }
     }
 
-    // Drop a table
-    public function dropTable($tableName)
+    /**
+     * Drop a table
+     * 
+     * @param string $tableName Table name
+     * @param bool $cascade Whether to cascade the drop
+     * @return array Operation result
+     */
+    public function dropTable(string $tableName, bool $cascade = false): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
             // Validate table name
-            if (!$this->isValidTableName($tableName)) {
+            $validation = DatabaseValidator::validateTableName($tableName);
+            if (!$validation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name.'
+                    'message' => implode(', ', $validation['errors'])
                 ];
             }
 
@@ -226,20 +158,23 @@ class Database
             if (!$this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' does not exist."
+                    'message' => "Table '{$tableName}' does not exist"
                 ];
             }
 
-            $sql = "DROP TABLE " . $this->sanitizeTableName($tableName);
-            $stmt = $connection->prepare($sql);
-            $stmt->execute();
+            // Build and execute DROP TABLE query
+            $sql = QueryBuilder::buildDropTableQuery($tableName, $cascade);
+            $this->connection->execute($sql);
 
             return [
                 'status' => 'success',
-                'message' => "Table '$tableName' deleted successfully."
+                'message' => "Table '{$tableName}' deleted successfully"
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Drop table error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -248,154 +183,23 @@ class Database
         }
     }
 
-    // Check if table exists
-    private function tableExists($tableName)
-    {
-        try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return false;
-
-            $query = "
-                SELECT COUNT(*) 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = :table_name
-            ";
-
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':table_name', $tableName);
-            $stmt->execute();
-
-            return $stmt->fetchColumn() > 0;
-        } catch (PDOException $e) {
-            return false;
-        }
-    }
-
-    // Validate table name
-    private function isValidTableName($name)
-    {
-        return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $name) && strlen($name) <= 63;
-    }
-
-    // Validate column name
-    private function isValidColumnName($name)
-    {
-        return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $name) && strlen($name) <= 63;
-    }
-
-    // Sanitize table name for SQL queries
-    private function sanitizeTableName($name)
-    {
-        return '"' . str_replace('"', '""', $name) . '"';
-    }
-
-    // Sanitize column name for SQL queries
-    private function sanitizeColumnName($name)
-    {
-        return '"' . str_replace('"', '""', $name) . '"';
-    }
-
-    // Generic CRUD operations base methods
-
-    /**
-     * Execute a SELECT query
-     */
-    public function select($query, $params = [])
-    {
-        try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return null;
-
-            $stmt = $connection->prepare($query);
-            $stmt->execute($params);
-            return $stmt->fetchAll();
-        } catch (PDOException $e) {
-            error_log("Select error: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Execute an INSERT query
-     */
-    public function insert($query, $params = [])
-    {
-        try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return false;
-
-            $stmt = $connection->prepare($query);
-            $result = $stmt->execute($params);
-
-            // Return the last inserted ID for PostgreSQL
-            return $result ? $connection->lastInsertId() : false;
-        } catch (PDOException $e) {
-            error_log("Insert error: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Execute an UPDATE query
-     */
-    public function update($query, $params = [])
-    {
-        try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return false;
-
-            $stmt = $connection->prepare($query);
-            $stmt->execute($params);
-            return $stmt->rowCount();
-        } catch (PDOException $e) {
-            error_log("Update error: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Execute a DELETE query
-     */
-    public function delete($query, $params = [])
-    {
-        try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return false;
-
-            $stmt = $connection->prepare($query);
-            $stmt->execute($params);
-            return $stmt->rowCount();
-        } catch (PDOException $e) {
-            error_log("Delete error: " . $e->getMessage());
-            return false;
-        }
-    }
-
     /**
      * Get data from a specific table with pagination
+     * 
+     * @param string $tableName Table name
+     * @param int $limit Number of rows to return
+     * @param int $offset Number of rows to skip
+     * @return array Operation result
      */
-    public function getTableData($tableName, $limit = 100, $offset = 0)
+    public function getTableData(string $tableName, int $limit = 100, int $offset = 0): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
             // Validate table name
-            if (!$this->isValidTableName($tableName)) {
+            $validation = DatabaseValidator::validateTableName($tableName);
+            if (!$validation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name.'
+                    'message' => implode(', ', $validation['errors'])
                 ];
             }
 
@@ -403,45 +207,26 @@ class Database
             if (!$this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' does not exist."
+                    'message' => "Table '{$tableName}' does not exist"
                 ];
             }
 
-            // Get table structure first
-            $structureQuery = "
-            SELECT 
-                column_name,
-                data_type,
-                is_nullable,
-                column_default
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' 
-            AND table_name = :table_name
-            ORDER BY ordinal_position
-        ";
-
-            $stmt = $connection->prepare($structureQuery);
-            $stmt->bindParam(':table_name', $tableName);
-            $stmt->execute();
+            // Get table structure
+            $columnsQuery = QueryBuilder::buildGetTableColumnsQuery();
+            $stmt = $this->connection->execute($columnsQuery, ['table_name' => $tableName]);
             $columns = $stmt->fetchAll();
 
             // Get total count
-            $countQuery = "SELECT COUNT(*) as total FROM " . $this->sanitizeTableName($tableName);
-            $stmt = $connection->prepare($countQuery);
-            $stmt->execute();
+            $countQuery = QueryBuilder::buildGetTableCountQuery($tableName);
+            $stmt = $this->connection->execute($countQuery);
             $totalRows = $stmt->fetch()['total'];
 
             // Get table data with pagination
-            $dataQuery = "
-            SELECT * FROM " . $this->sanitizeTableName($tableName) . " 
-            ORDER BY 1
-            LIMIT :limit OFFSET :offset
-        ";
-
-            $stmt = $connection->prepare($dataQuery);
-            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
-            $stmt->execute();
+            $dataQuery = QueryBuilder::buildGetTableDataQuery($tableName);
+            $stmt = $this->connection->execute($dataQuery, [
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
             $rows = $stmt->fetchAll();
 
             return [
@@ -455,7 +240,10 @@ class Database
                 'has_more' => ($offset + $limit) < $totalRows
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Get table data error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -464,26 +252,21 @@ class Database
         }
     }
 
-
     /**
      * Get detailed table schema information
+     * 
+     * @param string $tableName Table name
+     * @return array Operation result
      */
-    public function getTableSchema($tableName)
+    public function getTableSchema(string $tableName): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
             // Validate table name
-            if (!$this->isValidTableName($tableName)) {
+            $validation = DatabaseValidator::validateTableName($tableName);
+            if (!$validation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name.'
+                    'message' => implode(', ', $validation['errors'])
                 ];
             }
 
@@ -491,51 +274,19 @@ class Database
             if (!$this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' does not exist."
+                    'message' => "Table '{$tableName}' does not exist"
                 ];
             }
 
             // Get detailed column information
-            $query = "
-            SELECT 
-                c.column_name,
-                c.data_type,
-                c.character_maximum_length,
-                c.numeric_precision,
-                c.numeric_scale,
-                c.is_nullable,
-                c.column_default,
-                c.ordinal_position,
-                CASE 
-                    WHEN pk.column_name IS NOT NULL THEN true 
-                    ELSE false 
-                END as is_primary_key
-            FROM information_schema.columns c
-            LEFT JOIN (
-                SELECT ku.column_name
-                FROM information_schema.table_constraints tc
-                INNER JOIN information_schema.key_column_usage ku
-                    ON tc.constraint_name = ku.constraint_name
-                    AND tc.table_schema = ku.table_schema
-                WHERE tc.constraint_type = 'PRIMARY KEY'
-                    AND tc.table_schema = 'public'
-                    AND tc.table_name = :table_name
-            ) pk ON c.column_name = pk.column_name
-            WHERE c.table_schema = 'public' 
-                AND c.table_name = :table_name
-            ORDER BY c.ordinal_position
-        ";
-
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':table_name', $tableName);
-            $stmt->execute();
+            $query = QueryBuilder::buildGetTableSchemaQuery();
+            $stmt = $this->connection->execute($query, ['table_name' => $tableName]);
             $columns = $stmt->fetchAll();
 
             // Get table row count
-            $countQuery = "SELECT COUNT(*) as row_count FROM " . $this->sanitizeTableName($tableName);
-            $stmt = $connection->prepare($countQuery);
-            $stmt->execute();
-            $rowCount = $stmt->fetch()['row_count'];
+            $countQuery = QueryBuilder::buildGetTableCountQuery($tableName);
+            $stmt = $this->connection->execute($countQuery);
+            $rowCount = $stmt->fetch()['total'];
 
             return [
                 'status' => 'success',
@@ -544,7 +295,10 @@ class Database
                 'row_count' => $rowCount
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Get table schema error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -555,30 +309,44 @@ class Database
 
     /**
      * Add a new column to an existing table
+     * 
+     * @param string $tableName Table name
+     * @param string $columnName Column name
+     * @param string $columnType Column data type
+     * @param bool $isNullable Whether column allows NULL values
+     * @param mixed $defaultValue Default value for the column
+     * @return array Operation result
      */
-    public function addColumn($tableName, $columnName, $columnType, $isNullable = true, $defaultValue = null)
-    {
+    public function addColumn(
+        string $tableName,
+        string $columnName,
+        string $columnType,
+        bool $isNullable = true,
+        $defaultValue = null
+    ): array {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
             // Validate inputs
-            if (!$this->isValidTableName($tableName)) {
+            $tableValidation = DatabaseValidator::validateTableName($tableName);
+            if (!$tableValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name.'
+                    'message' => implode(', ', $tableValidation['errors'])
                 ];
             }
 
-            if (!$this->isValidColumnName($columnName)) {
+            $columnValidation = DatabaseValidator::validateColumnName($columnName);
+            if (!$columnValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid column name.'
+                    'message' => implode(', ', $columnValidation['errors'])
+                ];
+            }
+
+            $typeValidation = DatabaseValidator::validateDataType($columnType);
+            if (!$typeValidation['valid']) {
+                return [
+                    'status' => 'error',
+                    'message' => implode(', ', $typeValidation['errors'])
                 ];
             }
 
@@ -586,7 +354,7 @@ class Database
             if (!$this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' does not exist."
+                    'message' => "Table '{$tableName}' does not exist"
                 ];
             }
 
@@ -594,33 +362,38 @@ class Database
             if ($this->columnExists($tableName, $columnName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Column '$columnName' already exists in table '$tableName'."
+                    'message' => "Column '{$columnName}' already exists in table '{$tableName}'"
                 ];
             }
 
-            // Build ALTER TABLE statement
-            $sql = "ALTER TABLE " . $this->sanitizeTableName($tableName) .
-                " ADD COLUMN " . $this->sanitizeColumnName($columnName) .
-                " " . $columnType;
+            // Build column definition
+            $column = [
+                'name' => $columnName,
+                'type' => $columnType,
+                'nullable' => $isNullable
+            ];
 
-            if (!$isNullable) {
-                $sql .= " NOT NULL";
-            }
-
+            // Build and execute ADD COLUMN query
+            $sql = QueryBuilder::buildAddColumnQuery($tableName, $column);
+            
+            // Handle default value separately if provided
             if ($defaultValue !== null) {
+                $connection = $this->connection->getConnection();
                 $sql .= " DEFAULT " . $connection->quote($defaultValue);
             }
 
-            $stmt = $connection->prepare($sql);
-            $stmt->execute();
+            $this->connection->execute($sql);
 
             return [
                 'status' => 'success',
-                'message' => "Column '$columnName' added to table '$tableName' successfully.",
+                'message' => "Column '{$columnName}' added to table '{$tableName}' successfully",
                 'sql' => $sql
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Add column error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -631,30 +404,29 @@ class Database
 
     /**
      * Drop a column from an existing table
+     * 
+     * @param string $tableName Table name
+     * @param string $columnName Column name
+     * @param bool $cascade Whether to cascade the drop
+     * @return array Operation result
      */
-    public function dropColumn($tableName, $columnName)
+    public function dropColumn(string $tableName, string $columnName, bool $cascade = false): array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Failed to connect to database'
-                ];
-            }
-
             // Validate inputs
-            if (!$this->isValidTableName($tableName)) {
+            $tableValidation = DatabaseValidator::validateTableName($tableName);
+            if (!$tableValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid table name.'
+                    'message' => implode(', ', $tableValidation['errors'])
                 ];
             }
 
-            if (!$this->isValidColumnName($columnName)) {
+            $columnValidation = DatabaseValidator::validateColumnName($columnName);
+            if (!$columnValidation['valid']) {
                 return [
                     'status' => 'error',
-                    'message' => 'Invalid column name.'
+                    'message' => implode(', ', $columnValidation['errors'])
                 ];
             }
 
@@ -662,7 +434,7 @@ class Database
             if (!$this->tableExists($tableName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Table '$tableName' does not exist."
+                    'message' => "Table '{$tableName}' does not exist"
                 ];
             }
 
@@ -670,33 +442,33 @@ class Database
             if (!$this->columnExists($tableName, $columnName)) {
                 return [
                     'status' => 'error',
-                    'message' => "Column '$columnName' does not exist in table '$tableName'."
+                    'message' => "Column '{$columnName}' does not exist in table '{$tableName}'"
                 ];
             }
 
-            // Check if this is the only column (PostgreSQL doesn't allow tables with no columns)
+            // Check if this is the only column
             $columnCount = $this->getColumnCount($tableName);
             if ($columnCount <= 1) {
                 return [
                     'status' => 'error',
-                    'message' => "Cannot drop the last column from table '$tableName'."
+                    'message' => "Cannot drop the last column from table '{$tableName}'"
                 ];
             }
 
-            // Build ALTER TABLE statement
-            $sql = "ALTER TABLE " . $this->sanitizeTableName($tableName) .
-                " DROP COLUMN " . $this->sanitizeColumnName($columnName);
-
-            $stmt = $connection->prepare($sql);
-            $stmt->execute();
+            // Build and execute DROP COLUMN query
+            $sql = QueryBuilder::buildDropColumnQuery($tableName, $columnName, $cascade);
+            $this->connection->execute($sql);
 
             return [
                 'status' => 'success',
-                'message' => "Column '$columnName' dropped from table '$tableName' successfully.",
+                'message' => "Column '{$columnName}' dropped from table '{$tableName}' successfully",
                 'sql' => $sql
             ];
 
-        } catch (PDOException $e) {
+        } catch (DatabaseException $e) {
+            $e->logError();
+            return $e->toArray();
+        } catch (Exception $e) {
             error_log("Drop column error: " . $e->getMessage());
             return [
                 'status' => 'error',
@@ -706,57 +478,138 @@ class Database
     }
 
     /**
-     * Check if a column exists in a table
+     * Generic CRUD operations
      */
-    private function columnExists($tableName, $columnName)
+
+    /**
+     * Execute a SELECT query
+     * 
+     * @param string $query SQL query
+     * @param array $params Query parameters
+     * @return array|null Query results
+     */
+    public function select(string $query, array $params = []): ?array
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return false;
+            $stmt = $this->connection->execute($query, $params);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Select error: " . $e->getMessage());
+            return null;
+        }
+    }
 
-            $query = "
-            SELECT COUNT(*) 
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' 
-            AND table_name = :table_name 
-            AND column_name = :column_name
-        ";
+    /**
+     * Execute an INSERT query
+     * 
+     * @param string $query SQL query
+     * @param array $params Query parameters
+     * @return string|false Last insert ID or false on failure
+     */
+    public function insert(string $query, array $params = [])
+    {
+        try {
+            $this->connection->execute($query, $params);
+            return $this->connection->getLastInsertId();
+        } catch (Exception $e) {
+            error_log("Insert error: " . $e->getMessage());
+            return false;
+        }
+    }
 
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':table_name', $tableName);
-            $stmt->bindParam(':column_name', $columnName);
-            $stmt->execute();
+    /**
+     * Execute an UPDATE query
+     * 
+     * @param string $query SQL query
+     * @param array $params Query parameters
+     * @return int|false Number of affected rows or false on failure
+     */
+    public function update(string $query, array $params = [])
+    {
+        try {
+            $stmt = $this->connection->execute($query, $params);
+            return $stmt->rowCount();
+        } catch (Exception $e) {
+            error_log("Update error: " . $e->getMessage());
+            return false;
+        }
+    }
 
-            return $stmt->fetchColumn() > 0;
-        } catch (PDOException $e) {
+    /**
+     * Execute a DELETE query
+     * 
+     * @param string $query SQL query
+     * @param array $params Query parameters
+     * @return int|false Number of affected rows or false on failure
+     */
+    public function delete(string $query, array $params = [])
+    {
+        try {
+            $stmt = $this->connection->execute($query, $params);
+            return $stmt->rowCount();
+        } catch (Exception $e) {
+            error_log("Delete error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Helper methods
+     */
+
+    /**
+     * Check if table exists
+     * 
+     * @param string $tableName Table name
+     * @return bool True if table exists
+     */
+    private function tableExists(string $tableName): bool
+    {
+        try {
+            $query = QueryBuilder::buildTableExistsQuery();
+            $stmt = $this->connection->execute($query, ['table_name' => $tableName]);
+            return $stmt->fetch()['count'] > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a column exists in a table
+     * 
+     * @param string $tableName Table name
+     * @param string $columnName Column name
+     * @return bool True if column exists
+     */
+    private function columnExists(string $tableName, string $columnName): bool
+    {
+        try {
+            $query = QueryBuilder::buildColumnExistsQuery();
+            $stmt = $this->connection->execute($query, [
+                'table_name' => $tableName,
+                'column_name' => $columnName
+            ]);
+            return $stmt->fetch()['count'] > 0;
+        } catch (Exception $e) {
             return false;
         }
     }
 
     /**
      * Get the number of columns in a table
+     * 
+     * @param string $tableName Table name
+     * @return int Number of columns
      */
-    private function getColumnCount($tableName)
+    private function getColumnCount(string $tableName): int
     {
         try {
-            $connection = $this->getConnection();
-            if (!$connection)
-                return 0;
-
-            $query = "
-            SELECT COUNT(*) 
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' 
-            AND table_name = :table_name
-        ";
-
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':table_name', $tableName);
-            $stmt->execute();
-
-            return $stmt->fetchColumn();
-        } catch (PDOException $e) {
+            $query = QueryBuilder::buildColumnExistsQuery();
+            // Modify query to count all columns for the table
+            $query = str_replace('AND column_name = :column_name', '', $query);
+            $stmt = $this->connection->execute($query, ['table_name' => $tableName]);
+            return $stmt->fetch()['count'];
+        } catch (Exception $e) {
             return 0;
         }
     }
