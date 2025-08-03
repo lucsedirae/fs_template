@@ -1,0 +1,75 @@
+/* TextField Component - Bootstrap 5 enhancements */
+
+/* Enhanced focus states */
+.form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Error state styling */
+.form-control.is-invalid {
+  border-color: #dc3545;
+  background-image: none; /* Remove default Bootstrap validation icon */
+}
+
+.form-control.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+/* Label styling */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+/* Required field indicator */
+.form-label .text-danger {
+  font-weight: 600;
+}
+
+/* Help text styling */
+.form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Invalid feedback styling */
+.invalid-feedback {
+  font-size: 0.875rem;
+  color: #dc3545;
+  margin-top: 0.25rem;
+  display: block !important; /* Always show when present */
+}
+
+/* Disabled state */
+.form-control:disabled {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .form-label {
+    font-size: 0.9rem;
+  }
+
+  .form-text,
+  .invalid-feedback {
+    font-size: 0.8rem;
+  }
+}
+
+/* Smooth transitions */
+.form-control {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Input group spacing */
+.mb-3:last-child {
+  margin-bottom: 0 !important;
+}
